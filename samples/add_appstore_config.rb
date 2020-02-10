@@ -33,7 +33,14 @@ def create_new_appstore_target_config(target, copied_config, config_class = Xcod
 end
 
 # Open project and add build phase
-project_path = "./LaVanguardia.xcodeproj";
+files = Dir.glob("*.xcodeproj")
+if files.count == 0
+    puts " No xcodeproj found in the current directory"
+    puts " Nothing to do. Exiting"
+    exit
+end
+puts " Adding configuration to project '" + files[0] + "'"
+project_path = files[0]
 puts "Checking for existing configurations in project " + project_path;
 project = Xcodeproj::Project.open(project_path);
 copied_config = nil
