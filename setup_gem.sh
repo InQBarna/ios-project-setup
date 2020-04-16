@@ -1,11 +1,5 @@
 #! /bin/bash
 
-if [ ! -f "Podfile" ]; then
-    echo "Podfile does not exist"
-    echo "This is not supported :("
-    exit
-fi
-
 # Writing Gemfile with cocoapods and fastlane
 echo ""
 echo "Creating Gemfile with cocoapods and fastlane"
