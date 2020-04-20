@@ -1,16 +1,22 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 #Add  -w at the end of ruby for warnings
 
-require 'spaceship'
+require 'rubygems'
+require 'bundler/setup'
+Bundler.require(:default)
 
 Spaceship.login
 
+if !ENV["FASTLANE_TEAM_ID"]
+  puts "No team provided"
+end
 Spaceship.select_team
 
 devices = Spaceship.device.all
 
-puts "Device ID\tDevice Name"
-devices.each do |device|
-    puts "#{device.udid}\t#{device.name}"
-end
-
+File.open("fastlane/devices.txt", "w") { |f|
+  f.write "Device ID\tDevice Name\n"
+  devices.each do |device|
+      f.write "#{device.udid}\t#{device.name}\n"
+  end
+}
