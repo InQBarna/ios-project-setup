@@ -36,6 +36,22 @@ if [ -f "$plist" ]; then
         buildNumber=$(date -n "+%Y%m%d%H%M")
         /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $buildNumber" "$plist"
     fi
+
+    root_plist="${BUILT_PRODUCTS_DIR}/${WRAPPER_NAME}/Settings.bundle/Root.plist"
+    if [ -f "$root_plist" ]; then
+      echo "Updating Settings bundle."
+      bundle_short_version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "${plist}" )
+      build="${buildNumber} (${commit})"
+      dirty_build=`git diff HEAD | wc -c | xargs`
+
+      if [ "$dirty_build" != "0" ]
+      then
+        build="${build}/d"
+      fi
+
+      /usr/libexec/PlistBuddy -c "Set PreferenceSpecifiers:0:DefaultValue $bundle_short_version" "${root_plist}"
+      /usr/libexec/PlistBuddy -c "Set PreferenceSpecifiers:1:DefaultValue $build" "${root_plist}"
+    fi
 fi
   HEREDOC
 end
@@ -61,8 +77,8 @@ project.save();
 puts ""
 
 # Put project back to json format
-puts "Touching project file to convert to json format"
-puts ""
-exec( "xcproj touch "+project_path )
+# puts "Touching project file to convert to json format"
+# puts ""
+# exec( "xcproj touch "+project_path )
 
 ## TODO: We may add GIT_BRANCH_NAME and GIT_COMMIT_HASH to apps plist
