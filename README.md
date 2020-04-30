@@ -8,6 +8,8 @@
    There's a script to do this at xcode-scripts (http://gitlab.inqbarna.com/contrib/xcode-scripts)
 `../xcode-scripts/setup_gem.sh`
 5. Setup pods
+    - Add Swiftlint to pods 
+    - `pod 'SwiftLint'`
 ```
 bundle exec pod init
 bundle exec pod install
@@ -18,15 +20,21 @@ bundle exec pod install
     - `bundle exec fastlane init`
     - Select automate beta distribution
     - Asked for login to appstore, developer team, appstore id
+7. Setup match
+    - Should work by just executing `../xcode-scripts/samples/setup_iqb_gitlab_match.sh`
 
-7. Setup GITIGNORE
+8. Setup GITIGNORE
 ```
 curl "https://www.gitignore.io/api/xcode" >> .gitignore
-echo ".bundle" >> .gitignore 
-echo "bin" >> .gitignore 
 echo "Pods" >> .gitignore 
+echo "fastlane/README.md" >> .gitignore 
+echo "fastlane/report.xml" >> .gitignore 
 ```
-8. Common project setup
-    - Add appstore config: `../xcode-scripts/samples/add_appstore_config.rb`
-    - Add swiftliny buld phase `../xcode-scripts/samples/add_swiftlint_build_phase.rb`
-    - Add bundleversion auto-setting `../xcode-scripts/samples/add_bundleversion_build_phase.rb`
+9. Common project setup
+    - Add appstore config: `bundle exec ruby ../xcode-scripts/samples/add_appstore_config.rb`
+    - Add swiftliny buld phase `bundle exec ruby ../xcode-scripts/samples/add_swiftlint_build_phase.rb`
+    - Add bundleversion auto-setting `bundle exec ruby ../xcode-scripts/samples/add_bundleversion_build_phase.rb`
+
+10. Firebase
+    - `fastlane add_plugin firebase_app_distribution`
+    - add firebase lane TODO: sample or code

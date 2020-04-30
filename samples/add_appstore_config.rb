@@ -1,8 +1,9 @@
 #!/usr/bin/ruby
 #Add  -w at the end of ruby for warnings
 
-require 'xcodeproj'
-
+require 'rubygems'
+require 'bundler/setup'
+Bundler.require(:default)
 
 # Method to add config to project
 def create_new_appstore_project_config(project, copied_config, config_class = Xcodeproj::Project::Object::XCBuildConfiguration)

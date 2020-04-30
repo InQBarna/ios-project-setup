@@ -1,7 +1,9 @@
 #!/usr/bin/ruby
 #Add  -w at the end of ruby for warnings
 
-require 'xcodeproj'
+require 'rubygems'
+require 'bundler/setup'
+Bundler.require(:default)
 
 # Method to add build phase
 BUILD_PHASE_PREFIX = "[IQ] " 

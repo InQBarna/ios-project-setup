@@ -1,8 +1,10 @@
 #!/usr/bin/ruby
 #Add  -w at the end of ruby for warnings
 
-require 'xcodeproj'
-require 'fileutils'
+require 'rubygems'
+require 'bundler/setup'
+Bundler.require(:default)
+Bundler.require('fileutils')
 
 def get_root_plist
   <<-HEREDOC
