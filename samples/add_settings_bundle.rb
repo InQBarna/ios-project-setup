@@ -54,6 +54,8 @@ if !File.file?(group_name + '/Root.plist')
     File.open(group_name + '/Root.plist', 'w') do |f|
       f.write(get_root_plist)
     end
+else
+    puts group_name + ' already created'
 end
 
 # Open project and add build phase
@@ -64,21 +66,24 @@ if files.count == 0
     exit
 end
 project_path = files[0]
-puts "Checking for existing targets in project " + project_path;
 project = Xcodeproj::Project.open(project_path);
 
 # Add settings.bundle to the project
 group = project.main_group[group_name]
 unless group
+  puts "Adding " + group_name + " to project " + project_path;
   group = project.main_group.new_file(group_name)
+else
+  puts group_name + " group in project already created"
 end
 
 project.targets.each do |native_target|
   # Add to all targets ?? for now
-  native_target.build_configurations.each do |cur_config|
-    unless native_target.resources_build_phase.files_references.include?(group)
-      native_target.add_resources([group])
-    end
+  unless native_target.resources_build_phase.files_references.include?(group)
+    puts "Adding copy resource phase to project " + project_path + " target " + native_target.name;
+    native_target.add_resources([group])
+  else
+    puts "Copy resource phase already created on project " + project_path + " target " + native_target.name;
   end
 end
 
