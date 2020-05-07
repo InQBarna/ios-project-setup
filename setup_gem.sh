@@ -9,7 +9,6 @@ echo "source \"https://rubygems.org\"
 gem 'fastlane'
 gem 'cocoapods'
 gem 'xcodeproj'
-gem 'spaceship'
 
 plugins_path = File.join(File.dirname(__FILE__), 'fastlane', 'Pluginfile')
 eval_gemfile(plugins_path) if File.exist?(plugins_path)
@@ -45,7 +44,10 @@ bundle --version | grep \"\$BUNDLER_VERSION\" || exit -1
 bundle install
 #bundle clean
 
-bundle exec pod install || bundle exec pod install --repo-update || exit -1
 " > scripts/setup.sh
 chmod +x scripts/setup.sh
 scripts/setup.sh
+
+# pod install added later to setup script...
+echo "bundle exec pod install || bundle exec pod install --repo-update || exit -1
+" >> scripts/setup.sh

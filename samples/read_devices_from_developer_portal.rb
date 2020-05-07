@@ -3,6 +3,7 @@
 
 require 'rubygems'
 require 'bundler/setup'
+require 'spaceship'
 Bundler.require(:default)
 
 Spaceship.login
