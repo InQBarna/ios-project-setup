@@ -46,4 +46,5 @@ fi
 echo "Building devices file"
 export FASTLANE_TEAM_ID=$TEAM_ID
 curl -fsSL http://gitlab.inqbarna.com/contrib/xcode-scripts/-/raw/master/samples/read_devices_from_developer_portal.rb > /tmp/read_devices_from_developer_portal.rb
+chmod +x /tmp/read_devices_from_developer_portal.rb
 bundle exec /tmp/read_devices_from_developer_portal.rb

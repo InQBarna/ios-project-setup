@@ -29,6 +29,12 @@ curl "https://www.gitignore.io/api/xcode" >> .gitignore
 echo "Pods" >> .gitignore 
 echo "fastlane/README.md" >> .gitignore 
 echo "fastlane/report.xml" >> .gitignore 
+echo "## Obj-C/Swift specific" >> .gitignore
+echo "*.hmap" >> .gitignore
+echo "*.ipa" >> .gitignore
+echo "*.dSYM.zip" >> .gitignore
+echo "*.dSYM" >> .gitignore
+echo ".DS_Store" >> .gitignore
 ```
 9. Common project setup
     - Add appstore config: `bundle exec ruby ../xcode-scripts/samples/add_appstore_config.rb`
