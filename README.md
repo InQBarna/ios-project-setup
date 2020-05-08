@@ -10,6 +10,7 @@
 5. Setup pods
     - Add Swiftlint to pods 
     - `pod 'SwiftLint'`
+    - (OPTIONAL) `pod 'SwiftFormat/CLI'` 
 ```
 bundle exec pod init
 bundle exec pod install
@@ -38,8 +39,9 @@ echo ".DS_Store" >> .gitignore
 ```
 9. Common project setup
     - Add appstore config: `bundle exec ruby ../xcode-scripts/samples/add_appstore_config.rb`
-    - Add swiftliny buld phase `bundle exec ruby ../xcode-scripts/samples/add_swiftlint_build_phase.rb`
+    - Add swiftlint build phase `bundle exec ruby ../xcode-scripts/samples/add_swiftlint_build_phase.rb`
     - Add bundleversion auto-setting `bundle exec ruby ../xcode-scripts/samples/add_bundleversion_build_phase.rb`
+    - (OPTIONAL) Add SwiftFormat build phase: `bundle exec ruby ../xcode-scripts/samples/add_swiftformat_build_phase.rb`
 
 10. Firebase
     - `fastlane add_plugin firebase_app_distribution`
