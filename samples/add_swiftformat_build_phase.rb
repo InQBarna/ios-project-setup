@@ -53,6 +53,6 @@ project.save();
 puts ""
 
 # Put project back to json format
-puts "Touching project file to convert to json format"
-puts ""
-exec( "xcproj touch "+project_path )
+#puts "Touching project file to convert to json format"
+#puts ""
+#exec( "xcproj touch "+project_path )
