@@ -79,11 +79,13 @@ end
 
 project.targets.each do |native_target|
   # Add to all targets ?? for now
-  unless native_target.resources_build_phase.files_references.include?(group)
-    puts "Adding copy resource phase to project " + project_path + " target " + native_target.name;
-    native_target.add_resources([group])
-  else
-    puts "Copy resource phase already created on project " + project_path + " target " + native_target.name;
+  if native_target.product_type == "com.apple.product-type.application"
+    unless native_target.resources_build_phase.files_references.include?(group)
+      puts "Adding copy resource phase to project " + project_path + " target " + native_target.name;
+      native_target.add_resources([group])
+    else
+      puts "Copy resource phase already created on project " + project_path + " target " + native_target.name;
+    end
   end
 end
 
