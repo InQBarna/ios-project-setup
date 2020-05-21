@@ -37,3 +37,45 @@ platform :ios do
   end
 
 end
+
+def iq_firebase(appname:,  schemename:,  targetname:,  xcprojname:, bundleid:, firebaseid:, testers_cs:)
+
+  timest = Time.new.strftime("%Y%m%d%H%M")
+  ENV["ENV_BUILD_NUMBER"] = timest
+
+  # Building app for AdHoc distribution, "Release" configuration and match-styled profiles are  mandatory
+  gym(scheme: schemename,
+      clean: true,
+      export_method: 'ad-hoc',
+      configuration: 'Release',
+      export_options: {
+        provisioningProfiles: {
+          bundleid => "match AdHoc " + bundleid
+        }
+      }
+  )
+
+  # Collecting a changelog from commit list
+  changelog = changelog_from_git_commits(
+                  tag_match_pattern: "firebase-beta/*",
+                  pretty: '• %s',
+                  merge_commit_filtering: 'exclude_merges'
+                  )
+  changelog_empty = changelog.nil? || changelog.empty?
+
+  firebase_app_distribution(
+      app: firebaseid,
+      testers: testers_cs,
+      release_notes: changelog
+  )
+  upload_symbols_to_crashlytics(
+      dsym_path: "./" + appname + ".app.dSYM.zip"
+  )
+
+  version = get_version_number(xcodeproj: xcprojname + ".xcodeproj", target: targetname)
+  newTag = "firebase-dist/v" + version + "(" + timest + ")"
+  add_git_tag(tag: newTag)
+  push_git_tags(tag: "\"" + newTag + "\"")
+
+  clean_build_artifacts
+end
