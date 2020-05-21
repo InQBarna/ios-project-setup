@@ -122,17 +122,12 @@ if [[ $PROJECT_NAME == "" ]]; then
   echo "[SETUP_GEM.SH] Could not find workspace file, build script won't be generated"
   exit -1
 fi
-TMP=`xcodebuild -project $PROJECT_NAME.xcodeproj -list | grep Schemes | wc -l`
-if [[ $TMP -gt 0 ]]; then
-  echo "[SETUP_GEM.SH] Looks like you hace schemes set up on your project, please avoid this. Schemes should be added to workspace!!"
-  echo "[SETUP_GEM.SH] Build script won't be generated"
-  exit -1
-fi
 SCHEME_FILE=`find $WORKSPACE_NAME.xcworkspace/xcshareddata/xcschemes  -iname *.xcscheme | head -n 1`
 SCHEME=`echo $SCHEME_FILE | sed -e "s/.*[/]\([a-zA-Z0-9 ]*\)\.xcscheme/\1/g"` 
 echo "[SETUP_GEM.SH] Using scheme "$SCHEME" for build purposes"
 if [[ "$SCHEME_FILE" == "" || "$SCHEME" == "" ]]; then
   echo "[SETUP_GEM.SH] There's no shared scheme on your workspace, for others to be able to build the same project you need a shared scheme in the workspace"
+  echo "[SETUP_GEM.SH] You may have schemes set up on your project, please avoid this. Schemes should be added to workspace!!"
   echo "[SETUP_GEM.SH] Build script won't be generated"
   exit -1
 fi
@@ -141,14 +136,14 @@ if [[ `git status $SCHEME_FILE | grep Untracked | wc -l` -gt 0 ]]; then
   echo "[SETUP_GEM.SH] Build script won't be generated"
   exit -1
 fi
-MAIN_TARGET=`xcodebuild -project $PROJECT_NAME.xcodeproj -list | sed -n '/Targets/,/^$/p' | grep -v "Tests" | grep -v "^$" | grep -v "Targets:"`
+MAIN_TARGET=`xcodebuild -project $PROJECT_NAME.xcodeproj -list 2>/dev/null | sed -n '/Targets/,/^$/p' | grep -v "Tests" | grep -v "^$" | grep -v "Targets:" | sed -e "s/^[ ]*//g" | head -n 1`
 if [[ "$MAIN_TARGET" == "" ]]; then
   echo "[SETUP_GEM.SH] Could not find main app target"
   echo "[SETUP_GEM.SH] Build script won't be generated"
   exit -1
 fi
 echo "[SETUP_GEM.SH] Using MAIN target "$MAIN_TARGET""
-TEST_TARGET=`xcodebuild -project $PROJECT_NAME.xcodeproj -list | sed -n '/Targets/,/^$/p' | grep "[^U][^I]Tests$" | sed -e "s/ *\([a-zA-Z ]*\)Tests/\1/g"`
+TEST_TARGET=`xcodebuild -project $PROJECT_NAME.xcodeproj -list 2>/dev/null | sed -n '/Targets/,/^$/p' | grep "[^U][^I]Tests$" | sed -e "s/ *\([a-zA-Z ]*\)Tests/\1/g" | sed -e "s/^[ ]*//g" | head -n 1`
 echo "[SETUP_GEM.SH] Using test target "${TEST_TARGET}Tests" for test purposes"
 if [[ "$TEST_TARGET" == "" ]]; then
   TEST_TARGET="${MAIN_TARGET}Tests"
@@ -156,7 +151,7 @@ if [[ "$TEST_TARGET" == "" ]]; then
 else
   TEST_TARGET="${TEST_TARGET}Tests"
 fi
-UI_TEST_TARGET=`xcodebuild -project $PROJECT_NAME.xcodeproj -list | sed -n '/Targets/,/^$/p' | grep "UITests$" | sed -e "s/ *\([a-zA-Z ]*\)UITests/\1/g"`
+UI_TEST_TARGET=`xcodebuild -project $PROJECT_NAME.xcodeproj -list 2>/dev/null | sed -n '/Targets/,/^$/p' | grep "UITests$" | sed -e "s/ *\([a-zA-Z ]*\)UITests/\1/g" | sed -e "s/^[ ]*//g" | head -n 1`
 echo "[SETUP_GEM.SH] Using ui test target "${UI_TEST_TARGET}UITests" for test purposes"
 if [[ "$UI_TEST_TARGET" == "" ]]; then
   UI_TEST_TARGET="${MAIN_TARGET}UITests"
@@ -230,6 +225,11 @@ export KEYCHAIN_NAME=""
 security -v unlock-keychain -p "$LOGIN_KEYCHAIN_PASSWORD" ~/Library/Keychains/$KEYCHAIN_NAME-db
 sed -i "" -e "s/http:\/\/gitlab.inqbarna.com/http:\/\/cicd:$GITLAB_PASSWORD@gitlab.inqbarna.com/" fastlane/Matchfile
 bundle exec fastlane match development --readonly --keychain_password $LOGIN_KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
+if [[ $INTENT == "firebase" ]]; then
+    bundle exec fastlane match adhoc --readonly --keychain_password $LOGIN_KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
+elif [[ $INTENT == "beta" ]]; then
+    bundle exec fastlane match appstore --readonly --keychain_password $LOGIN_KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
+fi
 sed -i "" -e "s/http:\/\/cicd:$GITLAB_PASSWORD@gitlab.inqbarna.com/http:\/\/gitlab.inqbarna.com/" fastlane/Matchfile
 
 echo "[BUILD.SH] Using keychain \"$KEYCHAIN_NAME\", and unlocking it for build"
@@ -270,11 +270,13 @@ if [[ $INTENT == "test" ]]; then
 
 elif [[ $INTENT == "firebase" ]]; then
 
-    echo "[BUILD.SH] firebase not defined"
+    echo "[BUILD.SH] Uploading to firebase using fastlane"
+    bundle exec fastlane firebase
 
-elif [[ $INTENT == "firebase" ]]; then
+elif [[ $INTENT == "beta" ]]; then
 
-    echo "[BUILD.SH] appstore not defined"
+    echo "[BUILD.SH] Uploading to appstore using fastlane"
+    bundle exec fastlane beta
 
 else
 
@@ -306,4 +308,6 @@ sed -i "" -e "s/^TEST_TARGET=\"\"$/TEST_TARGET=\"$TEST_TARGET\"/g" scripts/build
 sed -i "" -e "s/^UI_TEST_TARGET=\"\"$/UI_TEST_TARGET=\"$UI_TEST_TARGET\"/g" scripts/build.sh
 SAFE_PROJECT_NAME=`echo "$PROJECT_NAME" | tr -cd "[:alnum:]\n"`
 sed -i "" -e "s/^export KEYCHAIN_NAME=\"\"$/export KEYCHAIN_NAME=\"$SAFE_PROJECT_NAME\"/g" scripts/build.sh
+
+chmod +x scripts/build.sh
 
