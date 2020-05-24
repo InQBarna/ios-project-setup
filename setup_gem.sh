@@ -272,8 +272,15 @@ elif [[ $INTENT == "firebase" ]]; then
 
     echo "[BUILD.SH] Uploading to firebase using fastlane"
     if [[ `which firebase` == "" ]]; then
-        FIREBASE_PATH=`pwd`/firebase
+        export FIREBASE_PATH=`pwd`/firebase
         ./firebase --version || curl -L "https://firebase.tools/bin/macos/latest" --output firebase && chmod +x firebase && ./firebase --version
+        if [[ `which firebase` == "" ]]; then
+          export PATH=$PATH:`pwd`
+        fi
+        if [[ `which firebase` == "" ]]; then
+           echo "[BUILD.SH] Could not find or install firebase cli"
+           exit
+        fi
     fi
     bundle exec fastlane firebase
 
