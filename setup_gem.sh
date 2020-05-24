@@ -271,6 +271,10 @@ if [[ $INTENT == "test" ]]; then
 elif [[ $INTENT == "firebase" ]]; then
 
     echo "[BUILD.SH] Uploading to firebase using fastlane"
+    if [[ `which firebase` == "" ]]; then
+        FIREBASE_PATH=`pwd`/firebase
+        ./firebase --version || curl -L "https://firebase.tools/bin/macos/latest" --output firebase && chmod +x firebase && ./firebase --version
+    fi
     bundle exec fastlane firebase
 
 elif [[ $INTENT == "beta" ]]; then

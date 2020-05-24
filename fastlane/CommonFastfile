@@ -66,6 +66,7 @@ def iq_firebase(appname:,  schemename:,  targetname:,  xcprojname:, bundleid:, f
   firebase_app_distribution(
       app: firebaseid,
       testers: testers_cs,
+      firebase_cli_path: '/usr/local/bin/firebase',
       release_notes: changelog
   )
   upload_symbols_to_crashlytics(
