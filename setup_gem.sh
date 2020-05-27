@@ -90,8 +90,14 @@ rbenv versions | grep "$RUBY_VERSION" || rbenv install $RUBY_VERSION
 rbenv local $RUBY_VERSION
 ruby --version | grep "$RUBY_VERSION" || exit -1
 gem env | grep "RUBY VERSION: $RUBY_VERSION" || exit -1
-gem install --user-install bundler:$BUNDLER_VERSION
-bundle --version | grep "$BUNDLER_VERSION" || exit -1
+if [[ `bundle --version | grep "$BUNDLER_VERSION"` == "" ]]; then
+    echo "Y" | gem uninstall -a bundler
+    gem install --user-install bundler:$BUNDLER_VERSION
+fi
+if [[ `bundle --version | grep "$BUNDLER_VERSION"` == "" ]]; then
+  echo "[SETUP.SH] Could not install bundler version \"$BUNDLER_VERSION\""
+  exit -1
+fi
 bundle install
 #bundle clean
 
