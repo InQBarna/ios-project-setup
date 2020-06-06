@@ -80,7 +80,7 @@ def iq_firebase(appname:,  schemename:,  targetname:,  xcprojname:, bundleid:, f
   clean_build_artifacts
 end
 
-def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:, firebaseid:, testers_cs:)
+def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:)
 
   timest = Time.new.strftime("%Y%m%d%H%M")
   ENV["ENV_BUILD_NUMBER"] = timest
