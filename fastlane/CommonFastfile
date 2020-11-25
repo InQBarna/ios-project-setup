@@ -38,7 +38,7 @@ platform :ios do
 
 end
 
-def iq_firebase(appname:,  schemename:,  targetname:,  xcprojname:, bundleid:, firebaseid:, testers_cs:, skip_push_tag = false)
+def iq_firebase(appname:,  schemename:,  targetname:,  xcprojname:, bundleid:, firebaseid:, testers_cs:)
 
   timest = Time.new.strftime("%Y%m%d%H%M")
   ENV["ENV_BUILD_NUMBER"] = timest
@@ -75,14 +75,12 @@ def iq_firebase(appname:,  schemename:,  targetname:,  xcprojname:, bundleid:, f
   version = get_version_number(xcodeproj: xcprojname + ".xcodeproj", target: targetname)
   newTag = "firebase-dist/v" + version + "(" + timest + ")"
   add_git_tag(tag: newTag)
-  if !skip_push_tag
-    push_git_tags(tag: "\"" + newTag + "\"")
-  fi
+  push_git_tags(tag: "\"" + newTag + "\"")
 
   clean_build_artifacts
 end
 
-def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:, skip_push_tag = false)
+def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:)
 
   timest = Time.new.strftime("%Y%m%d%H%M")
   ENV["ENV_BUILD_NUMBER"] = timest
@@ -120,9 +118,7 @@ def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, b
   version = get_version_number(xcodeproj: xcprojname + ".xcodeproj", target: targetname)
   newTag = "appstore/v" + version + "(" + timest + ")"
   add_git_tag(tag: newTag)
-  if !skip_push_tag
-    push_git_tags(tag: "\"" + newTag + "\"")
-  fi
+  push_git_tags(tag: "\"" + newTag + "\"")
 
   clean_build_artifacts
 end
