@@ -198,6 +198,12 @@ if [[ "$GITLAB_PASSWORD" == "" ]]; then
     echo "[BUILD.SH] export GITLAB_PASSWORD=XXX"
     exit -1
 fi
+if [[ "$GITLAB_USER" == "" ]]; then
+    GITLAB_USER="cicd"
+fi
+
+ORIGIN=`git config -l | grep remote.origin.url | sed -e "s/remote.origin.url=//" | sed -e "s/:\/\/.*@/:\/\//g"`
+ORIGIN_WITH_CREDS=`echo $ORIGIN | sed -e "s/:\/\//:\/\/$GITLAB_USER:$GITLAB_PASSWORD@/g"`
 
 echo "[BUILD.SH] Checking available runtime $RUNTIME and correct simulator $DEVICE"
 FOUND_DEVICE=`xcrun simctl list | sed -n "/-- iOS $RUNTIME --/,/-- /p" | grep "$DEVICE (" | sed -e "s/    $DEVICE [(]\([^)]*\).*/\1/"`
@@ -229,14 +235,14 @@ export MATCH_PASSWORD="$MATCH_PASSPHRASE"
 export KEYCHAIN_NAME=""
 [ ! -f ~/Library/Keychains/$KEYCHAIN_NAME-db ] &&  security create-keychain -p $LOGIN_KEYCHAIN_PASSWORD "$KEYCHAIN_NAME"
 security -v unlock-keychain -p "$LOGIN_KEYCHAIN_PASSWORD" ~/Library/Keychains/$KEYCHAIN_NAME-db
-sed -i "" -e "s/http:\/\/gitlab.inqbarna.com/http:\/\/cicd:$GITLAB_PASSWORD@gitlab.inqbarna.com/" fastlane/Matchfile
+sed -i "" -e "s/http:\/\/gitlab.inqbarna.com/http:\/\/$GITLAB_USER:$GITLAB_PASSWORD@gitlab.inqbarna.com/" fastlane/Matchfile
 bundle exec fastlane match development --readonly --keychain_password $LOGIN_KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
 if [[ $INTENT == "firebase" ]]; then
     bundle exec fastlane match adhoc --readonly --keychain_password $LOGIN_KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
 elif [[ $INTENT == "beta" ]]; then
     bundle exec fastlane match appstore --readonly --keychain_password $LOGIN_KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
 fi
-sed -i "" -e "s/http:\/\/cicd:$GITLAB_PASSWORD@gitlab.inqbarna.com/http:\/\/gitlab.inqbarna.com/" fastlane/Matchfile
+sed -i "" -e "s/http:\/\/$GITLAB_USER:$GITLAB_PASSWORD@gitlab.inqbarna.com/http:\/\/gitlab.inqbarna.com/" fastlane/Matchfile
 
 echo "[BUILD.SH] Using keychain \"$KEYCHAIN_NAME\", and unlocking it for build"
 if [[ `cat fastlane/Gymfile | grep OTHER_XCODE_SIGN_FLAGS | wc -l` == 1 ]]; then
@@ -288,12 +294,16 @@ elif [[ $INTENT == "firebase" ]]; then
            exit
         fi
     fi
+    git remote set-url origin $ORIGIN_WITH_CREDS
     bundle exec fastlane firebase
+    git remote set-url origin $ORIGIN
 
 elif [[ $INTENT == "beta" ]]; then
 
     echo "[BUILD.SH] Uploading to appstore using fastlane"
+    git remote set-url origin $ORIGIN_WITH_CREDS
     bundle exec fastlane beta
+    git remote set-url origin $ORIGIN
 
 else
 

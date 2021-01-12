@@ -106,10 +106,13 @@ def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, b
   changelog_empty = changelog.nil? || changelog.empty?
 
 
-  deliver(force: true,
-          skip_metadata: true,
-          skip_screenshots: true,
-          automatic_release: false)
+  ## This requires login and 2FA
+  #deliver(force: true,
+  #        skip_metadata: true,
+  #        skip_screenshots: true,
+  #        automatic_release: false)
+  upload_to_testflight(skip_waiting_for_build_processing: true,
+                       changelog: changelog)
 
   upload_symbols_to_crashlytics(
       dsym_path: "./" + appname + ".app.dSYM.zip"
