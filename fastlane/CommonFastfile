@@ -40,8 +40,13 @@ end
 
 def iq_firebase(appname:,  schemename:,  targetname:,  xcprojname:, bundleid:, firebaseid:, testers_cs:)
 
+  match(type: "adhoc",
+  		readonly: true)
+
   timest = Time.new.strftime("%Y%m%d%H%M")
   ENV["ENV_BUILD_NUMBER"] = timest
+
+  increment_build_number(build_number: timest.to_i)
 
   # Building app for AdHoc distribution, "Release" configuration and match-styled profiles are  mandatory
   gym(scheme: schemename,
@@ -49,6 +54,7 @@ def iq_firebase(appname:,  schemename:,  targetname:,  xcprojname:, bundleid:, f
       export_method: 'ad-hoc',
       configuration: 'Release',
       export_options: {
+        compileBitcode: false,
         provisioningProfiles: {
           bundleid => "match AdHoc " + bundleid
         }
@@ -62,6 +68,7 @@ def iq_firebase(appname:,  schemename:,  targetname:,  xcprojname:, bundleid:, f
                   merge_commit_filtering: 'exclude_merges'
                   )
   changelog_empty = changelog.nil? || changelog.empty?
+  changelog = 'no changes since last release' if changelog_empty
 
   firebase_app_distribution(
       app: firebaseid,
@@ -72,18 +79,28 @@ def iq_firebase(appname:,  schemename:,  targetname:,  xcprojname:, bundleid:, f
       dsym_path: "./" + appname + ".app.dSYM.zip"
   )
 
+  commit_version_bump(
+      message: "Version Bump",
+      xcodeproj: xcprojname + ".xcodeproj"
+  )
+
   version = get_version_number(xcodeproj: xcprojname + ".xcodeproj", target: targetname)
   newTag = "firebase-dist/v" + version + "(" + timest + ")"
   add_git_tag(tag: newTag)
-  push_git_tags(tag: "\"" + newTag + "\"")
+  push_to_git_remote
 
   clean_build_artifacts
 end
 
 def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:)
 
+  match(type: "appstore",
+          readonly: true)
+
   timest = Time.new.strftime("%Y%m%d%H%M")
   ENV["ENV_BUILD_NUMBER"] = timest
+
+  increment_build_number(build_number: timest.to_i)
 
   # Building app for AdHoc distribution, "Release" configuration and match-styled profiles are  mandatory
   gym(scheme: schemename,
@@ -104,6 +121,7 @@ def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, b
                   merge_commit_filtering: 'exclude_merges'
                   )
   changelog_empty = changelog.nil? || changelog.empty?
+  changelog = 'no changes since last release' if changelog_empty
 
 
   ## This requires login and 2FA
@@ -118,10 +136,15 @@ def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, b
       dsym_path: "./" + appname + ".app.dSYM.zip"
   )
 
+  commit_version_bump(
+      message: "Version Bump",
+      xcodeproj: xcprojname + ".xcodeproj"
+  )
+
   version = get_version_number(xcodeproj: xcprojname + ".xcodeproj", target: targetname)
   newTag = "appstore/v" + version + "(" + timest + ")"
   add_git_tag(tag: newTag)
-  push_git_tags(tag: "\"" + newTag + "\"")
+  push_to_git_remote
 
   clean_build_artifacts
 end
