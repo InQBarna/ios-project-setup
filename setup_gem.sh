@@ -186,9 +186,9 @@ echo "[BUILD.SH] Using xcode at $XCODE_PATH. (Use XCODE_EXTRA_PATH to change it)
 
 echo "[BUILD.SH] Checking input parameters"
 if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ]; then
-  if [[ "$LOGIN_KEYCHAIN_PASSWORD" == "" ]]; then
-    echo "[BUILD.SH] Missing LOGIN_KEYCHAIN_PASSWORD env variable, configure jenkins bindings or please use:"
-    echo "[BUILD.SH] export LOGIN_KEYCHAIN_PASSWORD=XXX"
+  if [[ "$KEYCHAIN_PASSWORD" == "" ]]; then
+    echo "[BUILD.SH] Missing KEYCHAIN_PASSWORD env variable, configure jenkins bindings or please use:"
+    echo "[BUILD.SH] export KEYCHAIN_PASSWORD=XXX"
     exit -1
   fi
   if [[ "$MATCH_PASSPHRASE" == "" ]]; then
@@ -222,8 +222,8 @@ if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ] || [ "$INTENT" == 
   # 
   echo "[BUILD.SH] Setting up keychain with match profiles"
   export KEYCHAIN_NAME="musclemixer"
-  [ ! -f ~/Library/Keychains/$KEYCHAIN_NAME-db ] &&  security create-keychain -p $LOGIN_KEYCHAIN_PASSWORD "$KEYCHAIN_NAME"
-  security -v unlock-keychain -p "$LOGIN_KEYCHAIN_PASSWORD" ~/Library/Keychains/$KEYCHAIN_NAME-db
+  [ ! -f ~/Library/Keychains/$KEYCHAIN_NAME-db ] &&  security create-keychain -p $KEYCHAIN_PASSWORD "$KEYCHAIN_NAME"
+  security -v unlock-keychain -p "$KEYCHAIN_PASSWORD" ~/Library/Keychains/$KEYCHAIN_NAME-db
   echo "[BUILD.SH] Using keychain \"$KEYCHAIN_NAME\", and unlocking it for build"
   security list-keychains -d user -s ~/Library/Keychains/$KEYCHAIN_NAME-db
   security set-keychain-settings ~/Library/Keychains/$KEYCHAIN_NAME-db
@@ -242,9 +242,9 @@ if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ] || [ "$INTENT" == 
   echo "xcargs \"OTHER_CODE_SIGN_FLAGS=--keychain=\\\"~/Library/Keychains/$KEYCHAIN_NAME-db\\\"\"" > fastlane/Gymfile
 
   # setup git creds
-  if [ "$GITLAB_USER" != "" ] && [ "$GITLAB_PASSWORD" == "" ]; then
+  if [ "$GIT_HTTPS_USER" != "" ] && [ "$GIT_HTTPS_PASSWORD" == "" ]; then
     ORIGIN=`git config -l | grep remote.origin.url | sed -e "s/remote.origin.url=//" | sed -e "s/:\/\/.*@/:\/\//g"`
-    ORIGIN_WITH_CREDS=`echo $ORIGIN | sed -e "s/:\/\//:\/\/$GITLAB_USER:$GITLAB_PASSWORD@/g"`
+    ORIGIN_WITH_CREDS=`echo $ORIGIN | sed -e "s/:\/\//:\/\/$GIT_HTTPS_USER:$GIT_HTTPS_PASSWORD@/g"`
   else
     ORIGIN_WITH_CREDS=`git config -l | grep remote.origin.url | sed -e "s/remote.origin.url=//" | sed -e "s/:\/\/.*@/:\/\//g"`
   fi
@@ -253,8 +253,8 @@ if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ] || [ "$INTENT" == 
   # Setup git creds for match and fastlane
   # 
   export MATCH_PASSWORD="$MATCH_PASSPHRASE"
-  if [ "$GITLAB_USER" != "" ] && [ "$GITLAB_PASSWORD" == "" ]; then
-    sed -i "" -e "s/http:\/\/gitlab.inqbarna.com/http:\/\/$GITLAB_USER:$GITLAB_PASSWORD@gitlab.inqbarna.com/" fastlane/Matchfile
+  if [ "$GIT_HTTPS_USER" != "" ] && [ "$GIT_HTTPS_PASSWORD" == "" ]; then
+    sed -i "" -e "s/http:\/\/gitlab.inqbarna.com/http:\/\/$GIT_HTTPS_USER:$GIT_HTTPS_PASSWORD@gitlab.inqbarna.com/" fastlane/Matchfile
   fi
   cleanupGym() {
     echo "[BUILD.SH] Cleanup Gym"
@@ -268,8 +268,8 @@ if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ] || [ "$INTENT" == 
   }
 
   if [[ $INTENT == "appstore" ]]; then
-    bundle exec fastlane match appstore --readonly --keychain_password $LOGIN_KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
-    bundle exec fastlane match adhoc --readonly --keychain_password $LOGIN_KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
+    bundle exec fastlane match appstore --readonly --keychain_password $KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
+    bundle exec fastlane match adhoc --readonly --keychain_password $KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
 
     echo "[BUILD.SH] Uploading to appstore using fastlane"
     # Use this is firebase is added as SPM
@@ -294,7 +294,7 @@ if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ] || [ "$INTENT" == 
         fi
     fi
 
-    bundle exec fastlane match adhoc --readonly --keychain_password $LOGIN_KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
+    bundle exec fastlane match adhoc --readonly --keychain_password $KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
     # Use this is firebase is added as SPM
     # export UPLOAD_SYMBOLS_PATH=`xcodebuild -showBuildSettings | grep -m 1 "BUILD_DIR" | grep -oEi "\/.*" | sed 's/Build\/Products/SourcePackages\/checkouts\/firebase-ios-sdk\/Crashlytics\/upload-symbols/'`
     # echo "Found UPLOAD_SYMBOLS_PATH at $UPLOAD_SYMBOLS_PATH"
