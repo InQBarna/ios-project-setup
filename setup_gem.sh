@@ -211,7 +211,7 @@ SCHEME=""
 TEST_TARGET=""
 UI_TEST_TARGET=""
 
-if [ "$INTENT" == "beta" ] || [ "$INTENT" == "firebase" ] || [ "$INTENT" == "browserStack" ]; then
+if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ] || [ "$INTENT" == "browserStack" ]; then
 
   echo "[BUILD.SH] Cleaning derived data"
   bundle exec fastlane action clear_derived_data
@@ -242,8 +242,12 @@ if [ "$INTENT" == "beta" ] || [ "$INTENT" == "firebase" ] || [ "$INTENT" == "bro
   echo "xcargs \"OTHER_CODE_SIGN_FLAGS=--keychain=\\\"~/Library/Keychains/$KEYCHAIN_NAME-db\\\"\"" > fastlane/Gymfile
 
   # setup git creds
-  ORIGIN=`git config -l | grep remote.origin.url | sed -e "s/remote.origin.url=//" | sed -e "s/:\/\/.*@/:\/\//g"`
-  ORIGIN_WITH_CREDS=`echo $ORIGIN | sed -e "s/:\/\//:\/\/$GITLAB_USER:$GITLAB_PASSWORD@/g"`
+  if [ "$GITLAB_USER" != "" ] && [ "$GITLAB_PASSWORD" == "" ]; then
+    ORIGIN=`git config -l | grep remote.origin.url | sed -e "s/remote.origin.url=//" | sed -e "s/:\/\/.*@/:\/\//g"`
+    ORIGIN_WITH_CREDS=`echo $ORIGIN | sed -e "s/:\/\//:\/\/$GITLAB_USER:$GITLAB_PASSWORD@/g"`
+  else
+    ORIGIN_WITH_CREDS=`git config -l | grep remote.origin.url | sed -e "s/remote.origin.url=//" | sed -e "s/:\/\/.*@/:\/\//g"`
+  fi
 
   #
   # Setup git creds for match and fastlane
@@ -258,9 +262,10 @@ if [ "$INTENT" == "beta" ] || [ "$INTENT" == "firebase" ] || [ "$INTENT" == "bro
      then rm fastlane/Gymfile
     fi
     unset DEVELOPER_DIR
+    git checkout fastlane/Matchfile
   }
 
-  if [[ $INTENT == "beta" ]]; then
+  if [[ $INTENT == "appstore" ]]; then
     bundle exec fastlane match appstore --readonly --keychain_password $LOGIN_KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
     bundle exec fastlane match adhoc --readonly --keychain_password $LOGIN_KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
 
@@ -381,7 +386,7 @@ else
     # 
     MAX_WARNINGS=0
     echo "[BUILD.SH] [`date +"%H:%M:%S"`] Checking for $MAX_WARNINGS warnings"
-    WARNINGS=`egrep '^(/.+:[0-9+:[0-9]+:.(warning):|fatal|===)' gymbuildlog/$PROJECT_NAME-$SCHEME.log | uniq`
+    WARNINGS=`egrep '^(/.+:[0-9+:[0-9]+:.(warning):|fatal|===)' "gymbuildlog/$PROJECT_NAME-$SCHEME.log" | uniq`
     NUM_WARNINGS=`echo $WARNINGS | egrep "(warning|fatal|===)" | wc -l`
     if [[ "$NUM_WARNINGS" -gt "$MAX_WARNINGS" ]]; then
       echo "There are $NUM_WARNINGS warnings, invalid build (max allowed warnings $MAX_WARNINGS"
@@ -396,14 +401,14 @@ else
     # Run unit tests
     # 
     echo "[BUILD.SH] [`date +"%H:%M:%S"`] Running unit tests"
-    bundle exec fastlane scan --test_without_building="true" --devices="$DEVICE ($RUNTIME)" --code_coverage="true" --clean="false" --only_testing="$TEST_TARGET" --derived_data_path="$DERIVEDDATA"
+    bundle exec fastlane scan --test_without_building="true" --devices="$DEVICE ($RUNTIME)" --scheme="$SCHEME" --code_coverage="true" --clean="false" --only_testing="$TEST_TARGET" --derived_data_path="$DERIVEDDATA"
     if [ $? -ne 0 ]; then
       removeCreatedSimulator
       cleanBuildDirectory
       exit -1
     fi
     echo "[BUILD.SH] [`date +"%H:%M:%S"`] Building code coverage result"
-    bundle exec slather coverage --cobertura-xml --output-directory coverage --ignore "Pods/*" --ignore "*/SourcePackages/*" --build-directory="$DERIVEDDATA" --scheme $SCHEME --workspace $WORKSPACE_NAME.xcworkspace $PROJECT_NAME.xcodeproj
+    bundle exec slather coverage --cobertura-xml --output-directory coverage --ignore "Pods/*" --ignore "*/SourcePackages/*" --build-directory="$DERIVEDDATA" --scheme "$SCHEME" --workspace "$WORKSPACE_NAME.xcworkspace" "$PROJECT_NAME.xcodeproj"
 
     #
     # Run ui tests
@@ -452,7 +457,7 @@ else
     # 
     MAX_WARNINGS=0
     echo "[BUILD.SH] [`date +"%H:%M:%S"`] Checking for $MAX_WARNINGS warnings"
-    WARNINGS=`egrep '^(/.+:[0-9+:[0-9]+:.(warning):|fatal|===)' gymbuildlog/$PROJECT_NAME-$SCHEME.log | uniq`
+    WARNINGS=`egrep '^(/.+:[0-9+:[0-9]+:.(warning):|fatal|===)' "gymbuildlog/$PROJECT_NAME-$SCHEME.log" | uniq`
     NUM_WARNINGS=`echo $WARNINGS | egrep "(warning|fatal|===)" | wc -l`
     if [[ "$NUM_WARNINGS" -gt "$MAX_WARNINGS" ]]; then
       echo "There are $NUM_WARNINGS warnings, invalid build (max allowed warnings $MAX_WARNINGS"
