@@ -253,7 +253,9 @@ if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ] || [ "$INTENT" == 
   # Setup git creds for match and fastlane
   # 
   export MATCH_PASSWORD="$MATCH_PASSPHRASE"
-  sed -i "" -e "s/http:\/\/gitlab.inqbarna.com/http:\/\/$GITLAB_USER:$GITLAB_PASSWORD@gitlab.inqbarna.com/" fastlane/Matchfile
+  if [ "$GITLAB_USER" != "" ] && [ "$GITLAB_PASSWORD" == "" ]; then
+    sed -i "" -e "s/http:\/\/gitlab.inqbarna.com/http:\/\/$GITLAB_USER:$GITLAB_PASSWORD@gitlab.inqbarna.com/" fastlane/Matchfile
+  fi
   cleanupGym() {
     echo "[BUILD.SH] Cleanup Gym"
     sed -i "" -e "/OTHER_CODE_SIGN_FLAGS.*/d" fastlane/Gymfile
