@@ -1,6 +1,5 @@
 #! /bin/bash
 
-
 # Version methods
 version_less_than_or_equal() {
     [  "$1" == `echo -e "$1\n$2" | sort -V | head -n1` ]
@@ -9,19 +8,8 @@ version_less_than() {
     [ "$1" == "$2" ] && return 1 || version_less_than_or_equal $1 $2
 }
 
-# Pre-checks
-USER_BUNDLER_VERSION=`bundle --version | sed -e "s/.*\([0-9]\.[0-9]*\.[0-9]*\).*/\1/"`
-BUNDLER_VERSION=$USER_BUNDLER_VERSION
-echo $BUNDLER_VERSION
-version_less_than "$USER_BUNDLER_VERSION" "2.2.21" && BUNDLER_VERSION="2.2.21"
-echo "Will force bundle version $BUNDLER_VERSION"
-
-
-
 # Writing Gemfile with cocoapods and fastlane
-echo ""
-echo "Creating Gemfile with cocoapods and fastlane"
-echo ""
+echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Creating Gemfile with fastlane, cocoapods, xcodeproj and slather (for coverage)"
 GEMFILE=$(cat <<"EOF"
 source "https://rubygems.org"
 
@@ -36,14 +24,18 @@ EOF
 )
 echo "$GEMFILE" > Gemfile
 
-
+# Pre-checks
+USER_BUNDLER_VERSION=`bundle --version | sed -e "s/.*\([0-9]\.[0-9]*\.[0-9]*\).*/\1/"`
+BUNDLER_VERSION=$USER_BUNDLER_VERSION
+version_less_than "$USER_BUNDLER_VERSION" "2.2.21" && BUNDLER_VERSION="2.2.21"
 
 # Configure ruby (rbenv) GEMS
 RUBY_VERSION="2.7.2"
 MIN_GEM_VERSION="3.2.20"
-echo ""
-echo "Setting up/configuring ruby $RUBY_VERSION (rbenv), GEM >$MIN_GEM_VERSION and bundler $BUNDLER_VERSION"
-echo ""
+echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Setting up/configuring setup script with:"
+echo " RUBY_VERSION      \"$RUBY_VERSION\" (rbenv)"
+echo " MIN_GEM_VERSION   \"$MIN_GEM_VERSION\""
+echo " BuNDLER_VERSION   \"$BUNDLER_VERSION\""
 if [[ ! -d scripts ]]; then
     mkdir scripts
 fi
@@ -108,6 +100,7 @@ sed -i "" -e "s/^export RUBY_VERSION=\"\"$/export RUBY_VERSION=\"$RUBY_VERSION\"
 sed -i "" -e "s/^export BUNDLER_VERSION=\"\"$/export BUNDLER_VERSION=\"$BUNDLER_VERSION\"/g" scripts/setup.sh
 sed -i "" -e "s/^export MIN_GEM_VERSION=\"\"$/export MIN_GEM_VERSION=\"$MIN_GEM_VERSION\"/g" scripts/setup.sh
 chmod +x scripts/setup.sh
+echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Running setup script without pod install"
 scripts/setup.sh
 
 # pod install added later to setup script...
@@ -118,51 +111,73 @@ bundle exec pod install || bundle exec pod install --repo-update || exit -1
 
 
 # build script
+WORKSPACE_NAME=`find . -iname *.xcworkspace | grep -v ".xcodeproj/" | head -n 1 | sed -e "s/\.\///g" | sed -e "s/\.xcworkspace//g"`
+PODFILE=`find . -iname Podfile | head -n 1`
+if [[ $WORKSPACE_NAME == "" && $PODFILE == "" ]]; then
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Could not find workspace file, will generate one by setting up pods"
+  bundle exec pod init
+  bundle exec pod install
+fi
 WORKSPACE_NAME=`find . -iname *.xcworkspace | head -n 1 | sed -e "s/\.\///g" | sed -e "s/\.xcworkspace//g"`
 if [[ $WORKSPACE_NAME == "" ]]; then
-  echo "[SETUP_GEM.SH] Could not find workspace file, build script won't be generated"
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Could not find workspace file, build script won't be generated"
   exit -1
 fi
+
+echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Setting up/configuring build script with:"
+echo " RUBY_VERSION      \"$RUBY_VERSION\" (rbenv)"
+echo " MIN_GEM_VERSION   \"$MIN_GEM_VERSION\""
+echo " BuNDLER_VERSION   \"$BUNDLER_VERSION\""
+echo " WORKSPACE_NAME    \"$WORKSPACE_NAME\""
 PROJECT_NAME=`find . -iname *.xcodeproj | head -n 1 | sed -e "s/\.\///g" | sed -e "s/\.xcodeproj//g"`
 if [[ $PROJECT_NAME == "" ]]; then
-  echo "[SETUP_GEM.SH] Could not find workspace file, build script won't be generated"
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Could not find workspace file, build script won't be generated"
   exit -1
 fi
-SCHEME_FILE=`find $WORKSPACE_NAME.xcworkspace/xcshareddata/xcschemes  -iname *.xcscheme | head -n 1`
-SCHEME=`echo $SCHEME_FILE | sed -e "s/.*[/]\([^/]*\)\.xcscheme/\1/g"` 
-echo "[SETUP_GEM.SH] Using scheme "$SCHEME" for build purposes (from $SCHEME_FILE)"
-if [[ "$SCHEME_FILE" == "" || "$SCHEME" == "" ]]; then
-  echo "[SETUP_GEM.SH] Error: There's no shared scheme on your workspace, for others to be able to build the same project you need a shared scheme in the workspace"
-  echo "[SETUP_GEM.SH] You may have schemes set up on your project, please avoid this. Schemes should be added to workspace!!"
-  echo "[SETUP_GEM.SH] Build script won't be generated"
+SCHEME_FILE=`find $WORKSPACE_NAME.xcworkspace -iname *.xcscheme | grep "xcshareddata/xcschemes" | head -n 1`
+if [[ "$SCHEME_FILE" != "" ]]; then
+  SCHEME=`echo $SCHEME_FILE | sed -e "s/.*[/]\([^/]*\)\.xcscheme/\1/g"` 
+else
+  SCHEME=`xcodebuild -project $PROJECT_NAME.xcodeproj -list 2>/dev/null | sed -n '/Schemes/,/^$/p' | grep -v "Tests" | grep -v "^$" | grep -v "Schemes:" | sed -e "s/^[ ]*//g" | head -n 1`
+fi
+if [[ "$SCHEME_FILE" != "" ]]; then
+  echo " SCHEME_FILE       \"$SCHEME_FILE\""
+fi
+if [[ "$SCHEME" == "" ]]; then
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Error: Could not find a valid scheme"
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Build script won't be generated"
   exit -1
 fi
-if [[ `git status $SCHEME_FILE | grep Untracked | wc -l` -gt 0 ]]; then
-  echo "[SETUP_GEM.SH] Error: The file $SCHEME_FILE should be added to the version control system"
-  echo "[SETUP_GEM.SH] Build script won't be generated"
-  exit -1
-fi
+echo " SCHEME            \"$SCHEME\""
 MAIN_TARGET=`xcodebuild -project $PROJECT_NAME.xcodeproj -list 2>/dev/null | sed -n '/Targets/,/^$/p' | grep -v "Tests" | grep -v "^$" | grep -v "Targets:" | sed -e "s/^[ ]*//g" | head -n 1`
 if [[ "$MAIN_TARGET" == "" ]]; then
-  echo "[SETUP_GEM.SH] Could not find main app target"
-  echo "[SETUP_GEM.SH] Build script won't be generated"
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Could not find main app target"
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Build script won't be generated"
   exit -1
 fi
-echo "[SETUP_GEM.SH] Using MAIN target "$MAIN_TARGET""
+echo " MAIN_TARGET       \"$MAIN_TARGET\""
 TEST_TARGET=`xcodebuild -project $PROJECT_NAME.xcodeproj -list 2>/dev/null | sed -n '/Targets/,/^$/p' | grep "[^U][^I]Tests" | sed -e "s/ *\([a-zA-Z ]*\)/\1/g" | head -n 1`
 if [[ "$TEST_TARGET" == "" ]]; then
   TEST_TARGET=`xcodebuild -project $PROJECT_NAME.xcodeproj -list 2>/dev/null | sed -n '/Targets/,/^$/p' | grep "Tests" | sed -e "s/ *\([a-zA-Z ]*\)/\1/g" | head -n 1`
   if [[ "$TEST_TARGET" == "" ]]; then
     TEST_TARGET="${MAIN_TARGET}Tests"
-    echo "[SETUP_GEM.SH] There's no test target in your project, will use ${TEST_TARGET} for testing purposes... but running tests won't work until you create it"
+    echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] There's no test target in your project, will use ${TEST_TARGET} for testing purposes... but running tests won't work until you create it"
   fi
 fi
 UI_TEST_TARGET=`xcodebuild -project $PROJECT_NAME.xcodeproj -list 2>/dev/null | sed -n '/Targets/,/^$/p' | grep "UITests" | sed -e "s/^[ ]*//g" | head -n 1`
 if [[ "$UI_TEST_TARGET" == "" ]]; then
   UI_TEST_TARGET="${MAIN_TARGET}UITests"
-  echo "[SETUP_GEM.SH] There's no test target in your project, you can create a target named ${MAIN_TARGET}UITests later if you want to run ui test separately"
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] There's no test target in your project, you can create a target named ${MAIN_TARGET}UITests later if you want to run ui test separately"
 else
-  echo "[SETUP_GEM.SH] Using test target "${UI_TEST_TARGET}" for UI test purposes"
+  echo " UI_TEST_TARGET    \"$UI_TEST_TARGET\""
+fi
+if [[ "$SCHEME_FILE" == "" ]]; then
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Warning: There's no shared scheme on your workspace, for others to be able to build the same project you need a shared scheme in the workspace"
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] You may have schemes set up on your project, please avoid this. Schemes should be added to workspace!!"
+else
+  if [[ `git status $SCHEME_FILE | grep Untracked | wc -l` -gt 0 ]]; then
+    echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Warning: The file $SCHEME_FILE should be added to the version control system"
+  fi
 fi
 
 BUILD_SH=$(cat <<"EOF"
