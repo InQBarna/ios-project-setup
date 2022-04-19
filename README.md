@@ -14,16 +14,14 @@
     - `pod 'SwiftLint'`
     - `pod 'Firebase/Crashlytics'`
     - (OPTIONAL) `pod 'SwiftFormat/CLI'` 
+6. Setup script should now be ready to be used:
 ```
-bundle exec pod init
-bundle exec pod install
+./scripts/setup.sh
 ```
-6. Setup fastlane
-    - You need the apple account credentials and active
-    - This is an interactive step
-    - `bundle exec fastlane init`
-    - Select automate beta distribution
-    - Asked for login to appstore, developer team, appstore id
+7. Setup fastlane
+    - This is an interactive step (you need valid apple account credentials), just run
+      - `bundle exec fastlane init`
+      - Select 4.- Manual setup
     - After fastlane setup you may edit Fastlane to look like:
 ```
 import_from_git(url: 'http://gitlab.inqbarna.com/contrib/xcode-scripts.git',
@@ -59,11 +57,11 @@ platform :ios do
 end
 
 ```
-7. Setup match
+8. Setup match
     - Please check the list of devices in the developer portal, having them cleaned right now would be nice!
     - Should work by just executing `../xcode-scripts/samples/setup_iqb_gitlab_match.sh`
 
-8. Setup GITIGNORE
+9. Setup GITIGNORE
 ```
 curl "https://www.gitignore.io/api/xcode" >> .gitignore
 echo "Pods" >> .gitignore 
@@ -76,13 +74,13 @@ echo "*.dSYM.zip" >> .gitignore
 echo "*.dSYM" >> .gitignore
 echo ".DS_Store" >> .gitignore
 ```
-9. Common project setup
+10. Common project setup
+    - Add bundleversion auto-setting `bundle exec ruby ../xcode-scripts/samples/add_bundleversion_build_phase.rb`
     - Add appstore config: `bundle exec ruby ../xcode-scripts/samples/add_appstore_config.rb`
     - Add swiftlint build phase `bundle exec ruby ../xcode-scripts/samples/add_swiftlint_build_phase.rb`
-    - Add bundleversion auto-setting `bundle exec ruby ../xcode-scripts/samples/add_bundleversion_build_phase.rb`
     - (OPTIONAL) Add SwiftFormat build phase: `bundle exec ruby ../xcode-scripts/samples/add_swiftformat_build_phase.rb`
 
-10. Firebase
+11. Firebase
     - Setup the project on firebase: Pods, addition of GoogleServices to project, appdelegate setup
     - Setup beta distribution on firebase
     - `fastlane add_plugin firebase_app_distribution`
@@ -92,6 +90,7 @@ echo ".DS_Store" >> .gitignore
     - `bundle exec fastlane firebase` should work ! (unless your project doesn't even compile :D )
 
 TODO for setup_gem.sh:
+    - Check current xcode version and target
     - Check for firebase pods
     - Check firebase plugin on fastlane
     - Check coverage is added to target
