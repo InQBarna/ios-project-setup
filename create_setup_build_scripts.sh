@@ -511,3 +511,93 @@ sed -i "" -e "s/^export KEYCHAIN_NAME=\"\"$/export KEYCHAIN_NAME=\"$SAFE_PROJECT
 
 chmod +x scripts/build.sh
 
+FASTFILE=$(cat <<"EOF"
+
+import_from_git(url: 'http://gitlab.inqbarna.com/contrib/xcode-scripts.git',
+               path: 'fastlane/CommonFastfile')
+
+default_platform(:ios)
+
+before_all do |lane, options|
+    app_store_connect_api_key(
+      key_id: "",
+      issuer_id: "",
+      key_filepath: "./fastlane/AuthKey_XXXXXXX.p8",
+      in_house: false,
+    )
+end
+
+platform :ios do
+
+  lane :renuke do
+    
+    match_nuke(type: "development")
+    match_nuke(type: "adhoc")
+    match_nuke(type: "appstore")
+  end
+
+  desc "Submit a new Test Build to Firebase"
+  desc "This will also make sure the profile is up to date"
+  lane :firebase do
+    # This method from include does most of the job
+    iq_firebase(schemename: "###",
+                appname: "###",
+                targetname: "###",
+                xcprojname: "###",
+                bundleid: "###.###.###",
+                firebaseid: "1:###:ios:###",
+                testers_cs: "")
+  end
+
+  desc "Submit a new Beta Build to Apple Apple TestFlight"
+  desc "This will also make sure the profile is up to date"
+  lane :beta do
+    iq_beta(appname: "###",
+            schemename: "###",
+            targetname: "###",
+            configuration: "Release",
+            xcprojname: "###",
+            bundleid: "###.###.###")
+  end
+end
+
+EOF
+)
+
+if [ ! -d fastlane ]; then
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Setting up fastlane with"
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Please provide the team id from developer portal"
+  read TEAM_ID
+  echo " TEAM_ID           \"$TEAM_ID\""
+  BUNDLE_ID=`xcodebuild -showBuildSettings --scheme="$SCHEME" -target "$MAIN_TARGET" | grep PRODUCT_BUNDLE_IDENTIFIER | sed -e "s/ *PRODUCT_BUNDLE_IDENTIFIER = \(.*\)$/\1/g"`
+  echo " BUNDLE_ID         \"$BUNDLE_ID\""
+  PRODUCT_NAME=`xcodebuild -showBuildSettings --scheme="$SCHEME" -target "$MAIN_TARGET" | grep FULL_PRODUCT_NAME | sed -e "s/ *FULL_PRODUCT_NAME = \(.*\)\.app$/\1/g"`
+  echo " PRODUCT_NAME      \"$PRODUCT_NAME\""
+  mkdir fastlane
+  echo "$FASTFILE" > fastlane/Fastfile
+  sed -i "" -e "s/appname: \"###\"/appname: \"$PRODUCT_NAME\"/g" fastlane/Fastfile
+  sed -i "" -e "s/schemename: \"###\"/schemename: \"$SCHEME\"/g" fastlane/Fastfile
+  sed -i "" -e "s/targetname: \"###\"/targetname: \"$MAIN_TARGET\"/g" fastlane/Fastfile
+  sed -i "" -e "s/xcprojname: \"###\"/xcprojname: \"$PROJECT_NAME\"/g" fastlane/Fastfile
+  sed -i "" -e "s/bundleid: \"###.###.###\"/bundleid: \"$BUNDLE_ID\"/g" fastlane/Fastfile
+
+  echo "app_identifier \"$BUNDLE_ID\"" > fastlane/Appfile
+  echo "team_id \"$TEAM_ID\"" >> fastlane/Appfile
+fi
+
+if [ ! -f fastlane/Matchfile ]; then
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Switching to setup_match.sh"
+  curl -fsSL http://gitlab.inqbarna.com/contrib/xcode-scripts/-/raw/master/samples/setup_match.sh > /tmp/setup_match.sh
+  chmod +x /tmp/setup_match.sh
+  /tmp/setup_match.sh
+fi
+
+FOUND_SCRIPT=`grep "BUILD NUMBER FROM FASTLANE TO PLIST" "$PROJECT_NAME.xcodeproj/project.pbxproj"`
+if [[ $FOUND_SCRIPT == "" ]]; then
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Switching to add_bundleversion_build_phase.rb"
+  curl -fsSL http://gitlab.inqbarna.com/contrib/xcode-scripts/-/raw/master/samples/add_bundleversion_build_phase.rb > /tmp/add_bundleversion_build_phase.rb
+  chmod +x /tmp/add_bundleversion_build_phase.rb
+  bundle exec ruby /tmp/add_bundleversion_build_phase.rb
+else
+  echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Build phase that includes build number to apps plist already found in project"
+fi
