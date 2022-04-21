@@ -37,9 +37,12 @@ We want to start a fresh project ready for CICD, which means
 At this point you should be able to run `./scripts/build.sh` correctly, and also run it with `export INTENT="test"`
 
 4. Firebase
-    - Setup the project on firebase: Pods, addition of GoogleServices to project, appdelegate setup
-    - Setup beta distribution on firebase running: `fastlane add_plugin firebase_app_distribution`
-    - Set the correct firebaseid on Fastfile (see step 6)
+    - Setup the project on firebase, following the steps from console.firebase.com: Pods, addition of GoogleServices to project, appdelegate setup...
+      - Right now adding firebase with SPM does not work correctly when uploading the debug symbols to crashlytics, please avoid SPM for firebase until solved
+    - Enable beta distribution on firebase website
+    - Setup beta distribution fastlane plugin on project running: `fastlane add_plugin firebase_app_distribution`
+    - Set the correct firebaseid on Fastfile (if not done in step 4)
+    - If you want to run the firebase distribution script locally, get sure you're logged in to firebase using `firebase login`
     - Create the provisioning profiles using: `bundle exec fastlane update_devices_and_profiles`
     - MANUALLY unset "Automatically manage signing" 
     - MANUALLY select the newly created prov profiles for every config
