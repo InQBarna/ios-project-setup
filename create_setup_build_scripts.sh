@@ -605,5 +605,6 @@ fi
 
 echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Settting up gitignore"
 curl "https://www.toptal.com/developers/gitignore/api/xcode,swift,macos,swiftpackagemanager,swiftpm" > .gitignore
+sed -i "" -e "/^\*\.xcodeproj$/d" .gitignore
 echo "Pods" >> .gitignore
 echo "fastlane/README.md" >> .gitignore
