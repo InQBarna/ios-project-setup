@@ -7,7 +7,7 @@ We want to start a fresh project ready for CICD, which means
     - Easily send a vertion to AppStoreConnect for a new release
 
 ## How to set up a new project
-1. Create and clone the repository, grab the requirements:
+1. Create and clone your project repository, grab the requirements:
     - App name
     - Bundle identifier created on dev portal
     - Apple team id (from dev portal)
@@ -15,6 +15,8 @@ We want to start a fresh project ready for CICD, which means
     - Firebase upload key (from firebase)
     - Auth p8 file (from dev portal)
     - App created on appstoreconnect
+
+1. Seriously... grab the requirements above or it will be harder to setup this later
 
 2. Create the xcode project on the root of the repository.
     - Create an iOS project
@@ -47,7 +49,7 @@ At this point you should be able to run `./scripts/build.sh` correctly, and also
     - MANUALLY unset "Automatically manage signing" 
     - MANUALLY select the newly created prov profiles for every config
 
-Now `bundle exec fastlane firebase` should work ! (unless your project doesn't even compile :D )
+If you correctly commit all your work (please see step 7 before trying this), now `bundle exec fastlane firebase` should work ! (unless your project doesn't even compile :D )
 
 5. Appstore
     - Write at least one device to `fastlane/devices.txt`, either MANUALLY or ... 
@@ -57,7 +59,7 @@ Now `bundle exec fastlane firebase` should work ! (unless your project doesn't e
       - MANUALLY unset "Automatically manage signing"
       - MANUALLY select the newly created prov profiles for every config
 
-Now `bundle exec fastlane beta` should work ! (unless your project doesn't even compile :D )
+If you correctly commit all your work (please see step 7 before trying this), now `bundle exec fastlane beta` should work ! (unless your project doesn't even compile :D )
 
 6. Configure desired pods
     - Add Swiftlint to pods 
