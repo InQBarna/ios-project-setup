@@ -1,6 +1,7 @@
 # Goals
 
 We want to start a fresh project ready for CICD, which means
+
     - Easily build te project in any (CICD)  machine (with some minimum requirements). And guarantee 0 warnings!
     - Easily run the tests and guarante they pass. And report coverage!
     - Easily send a test version to stakeholders
@@ -12,8 +13,11 @@ We want to start a fresh project ready for CICD, which means
     - Bundle identifier created on dev portal
     - Apple team id (from dev portal)
     - Match git repo url
-    - Firebase upload key (from firebase)
+    - Firebase app id (from firebase, looks like:  1:XXXX:ios:XXXX)
     - Auth p8 file (from dev portal)
+      - Key id
+      - Issuer id
+      - Auth p8 file (from dev portal)
     - App created on appstoreconnect
 
 1. Seriously... grab the requirements above or it will be harder to setup this later
@@ -70,16 +74,9 @@ If you correctly commit all your work (please see step 7 before trying this), no
 
 7. Setup GITIGNORE
 ```
-curl "https://www.gitignore.io/api/xcode" >> .gitignore
+curl "https://www.toptal.com/developers/gitignore/api/xcode,swift,macos,swiftpackagemanager,swiftpm" >> .gitignore
 echo "Pods" >> .gitignore 
 echo "fastlane/README.md" >> .gitignore 
-echo "fastlane/report.xml" >> .gitignore 
-echo "## Obj-C/Swift specific" >> .gitignore
-echo "*.hmap" >> .gitignore
-echo "*.ipa" >> .gitignore
-echo "*.dSYM.zip" >> .gitignore
-echo "*.dSYM" >> .gitignore
-echo ".DS_Store" >> .gitignore
 ```
 8. Other usual project setup (OPTIONAL)
     - Add adhoc config to the project copying the Release config: `bundle exec ruby ../xcode-scripts/samples/add_adhoc_config.rb`
