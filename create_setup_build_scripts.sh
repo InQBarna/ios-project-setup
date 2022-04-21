@@ -540,13 +540,14 @@ platform :ios do
   desc "This will also make sure the profile is up to date"
   lane :firebase do
     # This method from include does most of the job
-    iq_firebase(schemename: "###",
-                appname: "###",
-                targetname: "###",
-                xcprojname: "###",
-                bundleid: "###.###.###",
-                firebaseid: "1:###:ios:###",
-                testers_cs: "")
+    iq_firebase_v2(schemename: "###",
+                  appname: "###",
+                  targetname: "###",
+                  configuration: "Release",
+                  xcprojname: "###",
+                  bundleid: "###.###.###",
+                  firebaseid: "1:###:ios:###",
+                  testers_cs: "")
   end
 
   desc "Submit a new Beta Build to Apple Apple TestFlight"
@@ -601,3 +602,8 @@ if [[ $FOUND_SCRIPT == "" ]]; then
 else
   echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Build phase that includes build number to apps plist already found in project"
 fi
+
+echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Settting up gitignore"
+curl "https://www.toptal.com/developers/gitignore/api/xcode,swift,macos,swiftpackagemanager,swiftpm" > .gitignore
+echo "Pods" >> .gitignore
+echo "fastlane/README.md" >> .gitignore

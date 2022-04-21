@@ -38,21 +38,25 @@ platform :ios do
 
 end
 
-def iq_firebase(appname:,  schemename:,  targetname:,  xcprojname:, bundleid:, firebaseid:, testers_cs:)
+def iq_firebase(appname:, schemename:, targetname:, xcprojname:, bundleid:, firebaseid:, testers_cs:)
+  iq_firebase_v2(appname, schemename, targetName, 'Release', xcprojname, bundleid, firebaseid, testers_cs)
+end
+
+def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojname:, bundleid:, firebaseid:, testers_cs:)
 
   match(type: "adhoc",
-  		readonly: true)
+  	readonly: true)
 
   timest = Time.new.strftime("%Y%m%d%H%M")
   ENV["ENV_BUILD_NUMBER"] = timest
 
   increment_build_number(build_number: timest.to_i)
 
-  # Building app for AdHoc distribution, "Release" configuration and match-styled profiles are  mandatory
+  # Building app for AdHoc distribution, match-styled profiles are  mandatory
   gym(scheme: schemename,
       clean: true,
       export_method: 'ad-hoc',
-      configuration: 'Release',
+      configuration: configuration,
       export_options: {
         compileBitcode: false,
         provisioningProfiles: {
