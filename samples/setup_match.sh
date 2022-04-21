@@ -47,6 +47,6 @@ fi
 # bundle exec /tmp/read_devices_from_developer_portal.rb
 if [ ! -f fastlane/devices.txt ]; then
   echo "[SETUP_MATCH.SH] Empty devices file created at fastlane/devices.txt"
-  echo "Device ID\tDevice Name\n" > fastlane/devices.txt
+  echo -e 'Device ID\tDevice Name\n' > fastlane/devices.txt
   echo "[SETUP_MATCH.SH] If you want to build the devices file from current device list please run samples/read_devices_from_developer_portal.rb"
 fi

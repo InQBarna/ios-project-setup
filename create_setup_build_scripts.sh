@@ -226,7 +226,7 @@ SCHEME=""
 TEST_TARGET=""
 UI_TEST_TARGET=""
 
-if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ] || [ "$INTENT" == "browserStack" ]; then
+if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ]; then
 
   echo "[BUILD.SH] Cleaning derived data"
   bundle exec fastlane action clear_derived_data
@@ -431,7 +431,7 @@ else
     # Run ui tests
     # 
     rm -Rf fastlane/test_output_ui/*
-    if [[ "$UI_TEST_TARGET" == "" ]]; then
+    if [[ "$UI_TEST_TARGET" != "" ]]; then
       if [[ "$*" != "--no-concurrent" ]]; then
         echo "[BUILD.SH] [`date +"%H:%M:%S"`] Running UI tests concurrently"
         bundle exec fastlane scan --test_without_building="true" --code_coverage="false" --clean="false" --only_testing="$UI_TEST_TARGET" --output_directory="fastlane/test_output_ui/" --result_bundle="true" --xcargs="-parallel-testing-enabled YES -parallel-testing-worker-count 3" --destination="platform=iOS Simulator,name=$simulatorName,OS=$RUNTIME" --devices="${simulatorName} ($RUNTIME)" --derived_data_path="$DERIVEDDATA" --disable_xcpretty || true
