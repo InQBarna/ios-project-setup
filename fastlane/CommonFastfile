@@ -39,7 +39,7 @@ platform :ios do
 end
 
 def iq_firebase(appname:, schemename:, targetname:, xcprojname:, bundleid:, firebaseid:, testers_cs:)
-  iq_firebase_v2(appname, schemename, targetName, 'Release', xcprojname, bundleid, firebaseid, testers_cs)
+  iq_firebase_v2(appname: appname, schemename: schemename, targetName: targetName, configuration: 'Release', xcprojname: xcprojname, bundleid: bundleid, firebaseid: firebaseid, testers_cs: testers_cs)
 end
 
 def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojname:, bundleid:, firebaseid:, testers_cs:)
