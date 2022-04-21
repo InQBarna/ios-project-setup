@@ -14,6 +14,7 @@ We want to start a fresh project ready for CICD, which means
     - Match git repo url
     - Firebase upload key (from firebase)
     - Auth p8 file (from dev portal)
+    - App created on appstoreconnect
 
 2. Create the xcode project on the root of the repository.
     - Create an iOS project
@@ -41,7 +42,7 @@ At this point you should be able to run `./scripts/build.sh` correctly, and also
     - Set the correct firebaseid on Fastfile (see step 6)
     - Create the provisioning profiles using: `bundle exec fastlane update_devices_and_profiles`
     - MANUALLY unset "Automatically manage signing" 
-    - MANUALLY select the newly created prov profiles for every target
+    - MANUALLY select the newly created prov profiles for every config
 
 Now `bundle exec fastlane firebase` should work ! (unless your project doesn't even compile :D )
 
@@ -51,7 +52,7 @@ Now `bundle exec fastlane firebase` should work ! (unless your project doesn't e
     - If not done in step 4:
       - Create the provisioning profiles using: `bundle exec fastlane update_devices_and_profiles`
       - MANUALLY unset "Automatically manage signing"
-      - MANUALLY select the newly created prov profiles for every target
+      - MANUALLY select the newly created prov profiles for every config
 
 Now `bundle exec fastlane beta` should work ! (unless your project doesn't even compile :D )
 
@@ -77,6 +78,8 @@ echo ".DS_Store" >> .gitignore
 ```
 8. Other usual project setup (OPTIONAL)
     - Add adhoc config to the project copying the Release config: `bundle exec ruby ../xcode-scripts/samples/add_adhoc_config.rb`
+      - MANUALLY unset "Automatically manage signing"
+      - MANUALLY select the newly created prov profiles for adhoc config
     - Add swiftlint build phase `bundle exec ruby ../xcode-scripts/samples/add_swiftlint_build_phase.rb`
     - Or add SwiftFormat build phase: `bundle exec ruby ../xcode-scripts/samples/add_swiftformat_build_phase.rb`
 
