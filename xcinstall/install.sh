@@ -2,8 +2,15 @@
 
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
-export RUBY_VERSION="2.6.5"
+export RUBY_VERSION="2.7.2"
 export PATH=/usr/local/bin/:$PATH
+
+if [ "$#" -ne 1 ]
+then
+  echo "Usage: install.sh {XCODE_VERSION}"
+  echo "Example: install.sh 13.2.1"
+  exit 1
+fi
 
 echo "[INSTALL.SH] Configuring ruby and checking bundler version"
 which gem | grep ".rbenv" || eval "$(rbenv init -)"
@@ -23,7 +30,7 @@ fi
 
 bundle install
 
-VERSION="11.4.1"
+VERSION=$1
 bundle exec xcversion cleanup
 bundle exec xcversion install $VERSION
 bundle exec xcversion select $VERSION --symlink
