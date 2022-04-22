@@ -55,6 +55,9 @@ version_less_than() {
 echo "[SETUP.SH] Checking brew"
 if [[ `which brew` == "" ]]; then
     echo "[SETUP.SH] brew is necessary for installations, specially installing rbenv for ruby"
+    echo "[SETUP.SH]  Please install it using: "
+    echo "[SETUP.SH]   /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)\""
+    echo "[SETUP.SH]  Or follow instructions at https://brew.sh"
     exit -1
 fi
 
@@ -164,6 +167,7 @@ if [[ "$TEST_TARGET" == "" ]]; then
     echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] There's no test target in your project, will use ${TEST_TARGET} for testing purposes... but running tests won't work until you create it"
   fi
 fi
+echo " TEST_TARGET       \"$TEST_TARGET\""
 UI_TEST_TARGET=`xcodebuild -project $PROJECT_NAME.xcodeproj -list 2>/dev/null | sed -n '/Targets/,/^$/p' | grep "UITests" | sed -e "s/^[ ]*//g" | head -n 1`
 if [[ "$UI_TEST_TARGET" == "" ]]; then
   UI_TEST_TARGET="${MAIN_TARGET}UITests"
@@ -236,7 +240,7 @@ if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ]; then
   # Setup keychain
   # 
   echo "[BUILD.SH] Setting up keychain with match profiles"
-  export KEYCHAIN_NAME="musclemixer"
+  export KEYCHAIN_NAME=""
   [ ! -f ~/Library/Keychains/$KEYCHAIN_NAME-db ] &&  security create-keychain -p $KEYCHAIN_PASSWORD "$KEYCHAIN_NAME"
   security -v unlock-keychain -p "$KEYCHAIN_PASSWORD" ~/Library/Keychains/$KEYCHAIN_NAME-db
   echo "[BUILD.SH] Using keychain \"$KEYCHAIN_NAME\", and unlocking it for build"
@@ -258,6 +262,7 @@ if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ]; then
 
   # setup git creds
   if [ "$GIT_HTTPS_USER" != "" ] && [ "$GIT_HTTPS_PASSWORD" == "" ]; then
+    echo "[BUILD.SH] Changing git config origin to include provided GIT_HTTPS_USER and GIT_HTTPS_PASSWORD, this will allow pushing tags"
     ORIGIN=`git config -l | grep remote.origin.url | sed -e "s/remote.origin.url=//" | sed -e "s/:\/\/.*@/:\/\//g"`
     ORIGIN_WITH_CREDS=`echo $ORIGIN | sed -e "s/:\/\//:\/\/$GIT_HTTPS_USER:$GIT_HTTPS_PASSWORD@/g"`
   else
@@ -269,7 +274,9 @@ if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ]; then
   # 
   export MATCH_PASSWORD="$MATCH_PASSPHRASE"
   if [ "$GIT_HTTPS_USER" != "" ] && [ "$GIT_HTTPS_PASSWORD" == "" ]; then
-    sed -i "" -e "s/http:\/\/gitlab.inqbarna.com/http:\/\/$GIT_HTTPS_USER:$GIT_HTTPS_PASSWORD@gitlab.inqbarna.com/" fastlane/Matchfile
+    echo "[BUILD.SH] Changing math repo origin to include provided GIT_HTTPS_USER and GIT_HTTPS_PASSWORD, this will allow pushing tags"
+    sed -i "" -e "s/:\/\/.*@/:\/\/" fastlane/Matchfile
+    sed -i "" -e "s/:\/\//:\/\/$GIT_HTTPS_USER:$GIT_HTTPS_PASSWORD@" fastlane/Matchfile
   fi
   cleanupGym() {
     echo "[BUILD.SH] Cleanup Gym"
@@ -507,7 +514,7 @@ sed -i "" -e "s/^SCHEME=\"\"$/SCHEME=\"$SCHEME\"/g" scripts/build.sh
 sed -i "" -e "s/^TEST_TARGET=\"\"$/TEST_TARGET=\"$TEST_TARGET\"/g" scripts/build.sh
 sed -i "" -e "s/^UI_TEST_TARGET=\"\"$/UI_TEST_TARGET=\"$UI_TEST_TARGET\"/g" scripts/build.sh
 SAFE_PROJECT_NAME=`echo "$PROJECT_NAME" | tr -cd "[:alnum:]\n"`
-sed -i "" -e "s/^export KEYCHAIN_NAME=\"\"$/export KEYCHAIN_NAME=\"$SAFE_PROJECT_NAME\"/g" scripts/build.sh
+sed -i "" -e "s/export KEYCHAIN_NAME=\"\"/export KEYCHAIN_NAME=\"$SAFE_PROJECT_NAME\"/g" scripts/build.sh
 
 chmod +x scripts/build.sh
 
