@@ -48,10 +48,10 @@ At this point you should be able to run `./scripts/build.sh` correctly and it wi
 
 6. Appstore
     - (OPTIONAL) MANUALLY write at least one device to `fastlane/devices.txt`, either MANUALLY or ... 
-      - If you have correct credentials for it (doesn't work with keys, plain username/password), you can download the devices registered by running: `bundle exec fastlane update_devices_and_profiles`
+      - If you have correct credentials for it (doesn't work with keys, plain username/password), you can download the devices registered by running: `bundle exec ruby ../xcode-scripts/samples/read_devices_from_developer_portal.rb"`
     - Create the provisioning profiles using: `bundle exec fastlane update_devices_and_profiles`
-      - MANUALLY unset "Automatically manage signing"
-      - MANUALLY select the newly created prov profiles for every config
+      - (OPTIONAL) MANUALLY unset "Automatically manage signing"
+      - (OPTIONAL) MANUALLY select the newly created prov profiles for every config
 
 If you correctly commit all your work, now `bundle exec fastlane beta` should work ! (unless your project doesn't even compile :D )
 
@@ -81,6 +81,9 @@ If you correctly commit all your work, now `bundle exec fastlane firebase` shoul
     - Or add SwiftFormat build phase: `bundle exec ruby ../xcode-scripts/samples/add_swiftformat_build_phase.rb`
 
 TODO for setup_gem.sh:
+
+    - Change name beta to "testflight"
+    - Grab firebase id from env variable
     - Check current xcode version and target
     - Check for firebase pods
     - Check firebase plugin on fastlane
