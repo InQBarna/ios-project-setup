@@ -205,11 +205,6 @@ echo "[BUILD.SH] Using xcode at $XCODE_PATH. (Use XCODE_EXTRA_PATH to change it)
 
 echo "[BUILD.SH] Checking input parameters"
 if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ]; then
-  if [[ "$KEYCHAIN_PASSWORD" == "" ]]; then
-    echo "[BUILD.SH] Missing KEYCHAIN_PASSWORD env variable, configure jenkins bindings or please use:"
-    echo "[BUILD.SH] export KEYCHAIN_PASSWORD=XXX"
-    exit -1
-  fi
   if [[ "$MATCH_PASSPHRASE" == "" ]]; then
     echo "[BUILD.SH] Missing MATCH_PASSPHRASE env variable, configure jenkins bindings or please use:"
     echo "[BUILD.SH] export MATCH_PASSPHRASE=XXX"
@@ -241,7 +236,9 @@ if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ]; then
   # 
   echo "[BUILD.SH] Setting up keychain with match profiles"
   export KEYCHAIN_NAME=""
-  [ ! -f ~/Library/Keychains/$KEYCHAIN_NAME-db ] &&  security create-keychain -p $KEYCHAIN_PASSWORD "$KEYCHAIN_NAME"
+  [ ! -f ~/Library/Keychains/$KEYCHAIN_NAME-db ] && rm ~/Library/Keychains/$KEYCHAIN_NAME-db
+  export KEYCHAIN_PASSWORD=`date +"%s"`
+  security create-keychain -p $KEYCHAIN_PASSWORD "$KEYCHAIN_NAME"
   security -v unlock-keychain -p "$KEYCHAIN_PASSWORD" ~/Library/Keychains/$KEYCHAIN_NAME-db
   echo "[BUILD.SH] Using keychain \"$KEYCHAIN_NAME\", and unlocking it for build"
   security list-keychains -d user -s ~/Library/Keychains/$KEYCHAIN_NAME-db
