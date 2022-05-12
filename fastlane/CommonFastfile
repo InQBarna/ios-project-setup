@@ -44,6 +44,10 @@ end
 
 def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojname:, bundleid:, firebaseid:, testers_cs:)
 
+  clear_derived_data()
+
+  setup_ci()
+
   match(type: "adhoc",
   	readonly: true)
 
@@ -97,6 +101,10 @@ def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojnam
 end
 
 def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:)
+
+  clear_derived_data()
+
+  setup_ci()
 
   match(type: "appstore",
           readonly: true)
