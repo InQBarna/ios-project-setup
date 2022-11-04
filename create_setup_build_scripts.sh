@@ -190,7 +190,7 @@ BUILD_SH=$(cat <<"EOF"
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export RUBY_VERSION=""
-export BUNDLER_VERSION=""
+export BUNDLER_VERSION_MIN_GREP=" 2\."
 export PATH=/usr/local/bin/:$PATH
 if [ "$XCODE_EXTRA_PATH" == "" ]; then
     export XCODE_EXTRA_PATH=""
@@ -214,121 +214,51 @@ fi
 
 echo "[BUILD.SH] Configuring ruby and checking bundler version"
 which gem | grep ".rbenv" || eval "$(rbenv init -)"
-bundle --version | grep "$BUNDLER_VERSION" || exit -1
+bundle --version | grep "$BUNDLER_VERSION_MIN_GREP" || exit -1
 ruby --version | grep "$RUBY_VERSION" || exit -1
 gem env | grep "RUBY VERSION: $RUBY_VERSION" || exit -1
-bundle --version | grep "$BUNDLER_VERSION" || exit -1
+bundle --version | grep "$BUNDLER_VERSION_MIN_GREP" || exit -1
 
-WORKSPACE_NAME=""
-PROJECT_NAME=""
-SCHEME=""
-TEST_TARGET=""
-UI_TEST_TARGET=""
+if [[ $INTENT == "appstore" ]]; then
 
-if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ]; then
+  echo "[BUILD.SH] Uploading to appstore using fastlane"
+  bundle exec fastlane beta
 
-  echo "[BUILD.SH] Cleaning derived data"
-  bundle exec fastlane action clear_derived_data
+elif [[ $INTENT == "firebase" ]]; then
 
-
-  #
-  # Setup keychain
-  # 
-  echo "[BUILD.SH] Setting up keychain with match profiles"
-  export KEYCHAIN_NAME=""
-  [ ! -f ~/Library/Keychains/$KEYCHAIN_NAME-db ] && rm ~/Library/Keychains/$KEYCHAIN_NAME-db
-  export KEYCHAIN_PASSWORD=`date +"%s"`
-  security create-keychain -p $KEYCHAIN_PASSWORD "$KEYCHAIN_NAME"
-  security -v unlock-keychain -p "$KEYCHAIN_PASSWORD" ~/Library/Keychains/$KEYCHAIN_NAME-db
-  echo "[BUILD.SH] Using keychain \"$KEYCHAIN_NAME\", and unlocking it for build"
-  security list-keychains -d user -s ~/Library/Keychains/$KEYCHAIN_NAME-db
-  security set-keychain-settings ~/Library/Keychains/$KEYCHAIN_NAME-db
-  cleanupKeychain() {
-    echo "[BUILD.SH] Cleanup keychain"
-    security list-keychains -d user -s ~/Library/Keychains/login.keychain-db
-  }
-
-  #
-  # Setup gym
-  # 
-  if [[ `cat fastlane/Gymfile | grep OTHER_XCODE_SIGN_FLAGS | wc -l` == 1 ]]; then
-    echo "[BUILD.SH] Gymfile with OTHER_XCODE_SIGN_FLAGS not supported by this script, please report the issue if necessary"
-    exit -1
-  fi
-  echo "xcargs \"OTHER_CODE_SIGN_FLAGS=--keychain=\\\"~/Library/Keychains/$KEYCHAIN_NAME-db\\\"\"" > fastlane/Gymfile
-
-  # setup git creds
-  if [ "$GIT_HTTPS_USER" != "" ] && [ "$GIT_HTTPS_PASSWORD" == "" ]; then
-    echo "[BUILD.SH] Changing git config origin to include provided GIT_HTTPS_USER and GIT_HTTPS_PASSWORD, this will allow pushing tags"
-    ORIGIN=`git config -l | grep remote.origin.url | sed -e "s/remote.origin.url=//" | sed -e "s/:\/\/.*@/:\/\//g"`
-    ORIGIN_WITH_CREDS=`echo $ORIGIN | sed -e "s/:\/\//:\/\/$GIT_HTTPS_USER:$GIT_HTTPS_PASSWORD@/g"`
-  else
-    ORIGIN_WITH_CREDS=`git config -l | grep remote.origin.url | sed -e "s/remote.origin.url=//" | sed -e "s/:\/\/.*@/:\/\//g"`
-  fi
-
-  #
-  # Setup git creds for match and fastlane
-  # 
-  export MATCH_PASSWORD="$MATCH_PASSPHRASE"
-  if [ "$GIT_HTTPS_USER" != "" ] && [ "$GIT_HTTPS_PASSWORD" == "" ]; then
-    echo "[BUILD.SH] Changing math repo origin to include provided GIT_HTTPS_USER and GIT_HTTPS_PASSWORD, this will allow pushing tags"
-    sed -i "" -e "s/:\/\/.*@/:\/\/" fastlane/Matchfile
-    sed -i "" -e "s/:\/\//:\/\/$GIT_HTTPS_USER:$GIT_HTTPS_PASSWORD@" fastlane/Matchfile
-  fi
-  cleanupGym() {
-    echo "[BUILD.SH] Cleanup Gym"
-    sed -i "" -e "/OTHER_CODE_SIGN_FLAGS.*/d" fastlane/Gymfile
-    if [[ `cat fastlane/Gymfile` == "" ]];
-     # Removing Gymfile since we created it!
-     then rm fastlane/Gymfile
-    fi
-    unset DEVELOPER_DIR
-    git checkout fastlane/Matchfile
-  }
-
-  if [[ $INTENT == "appstore" ]]; then
-    bundle exec fastlane match appstore --readonly --keychain_password $KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
-    bundle exec fastlane match adhoc --readonly --keychain_password $KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
-
-    echo "[BUILD.SH] Uploading to appstore using fastlane"
-    # Use this is firebase is added as SPM
-    # export UPLOAD_SYMBOLS_PATH=`xcodebuild -showBuildSettings | grep -m 1 "BUILD_DIR" | grep -oEi "\/.*" | sed 's/Build\/Products/SourcePackages\/checkouts\/firebase-ios-sdk\/Crashlytics\/upload-symbols/'`
-    # echo "Found UPLOAD_SYMBOLS_PATH at $UPLOAD_SYMBOLS_PATH"
-    git remote set-url origin $ORIGIN_WITH_CREDS
-    bundle exec fastlane beta
-    git remote set-url origin $ORIGIN
-
-  elif [[ $INTENT == "firebase" ]]; then
-
-    echo "[BUILD.SH] Uploading to firebase using fastlane"
-    if [[ `which firebase` == "" ]]; then
-        export FIREBASE_PATH=`pwd`/firebase
-        ./firebase --version || curl -L "https://firebase.tools/bin/macos/latest" --output firebase && chmod +x firebase && ./firebase --version
-        if [[ `which firebase` == "" ]]; then
-          export PATH=$PATH:`pwd`
-        fi
-        if [[ `which firebase` == "" ]]; then
+  echo "[BUILD.SH] Uploading to firebase using fastlane"
+  if [[ `which firebase` == "" ]]; then
+      export FIREBASE_PATH=`pwd`/firebase
+      ./firebase --version || curl -L "https://firebase.tools/bin/macos/latest" --output firebase && chmod +x firebase && ./firebase --version
+      if [[ `which firebase` == "" ]]; then
+        export PATH=$PATH:`pwd`
+      fi
+      if [[ `which firebase` == "" ]]; then
+         export FIREBASE_PATH=`pwd`/firebase
+         ./firebase --version || curl -L "https://firebase.tools/bin/macos/latest" --output firebase && chmod +x firebase && ./firebase --version
+         if [[ `which firebase` == "" ]]; then
+           export PATH=$PATH:`pwd`
+         fi
+         if [[ `which firebase` == "" ]]; then
            echo "[BUILD.SH] Could not find or install firebase cli"
            exit
-        fi
-    fi
-
-    bundle exec fastlane match adhoc --readonly --keychain_password $KEYCHAIN_PASSWORD --keychain_name "$KEYCHAIN_NAME"
-    # Use this is firebase is added as SPM
-    # export UPLOAD_SYMBOLS_PATH=`xcodebuild -showBuildSettings | grep -m 1 "BUILD_DIR" | grep -oEi "\/.*" | sed 's/Build\/Products/SourcePackages\/checkouts\/firebase-ios-sdk\/Crashlytics\/upload-symbols/'`
-    # echo "Found UPLOAD_SYMBOLS_PATH at $UPLOAD_SYMBOLS_PATH"
-    git remote set-url origin $ORIGIN_WITH_CREDS
-    bundle exec fastlane firebase
-    git remote set-url origin $ORIGIN
+         fi
+      fi
   fi
 
-  #
-  # Common cleanup (Gym)
-  # 
-  cleanupKeychain
-  cleanupGym
-  
+  echo "[BUILD.SH] Uploading to firebase using fastlane"
+  # Use this is firebase is added as SPM
+  # export UPLOAD_SYMBOLS_PATH=`xcodebuild -showBuildSettings | grep -m 1 "BUILD_DIR" | grep -oEi "\/.*" | sed 's/Build\/Products/SourcePackages\/checkouts\/firebase-ios-sdk\/Crashlytics\/upload-symbols/'`
+  # echo "Found UPLOAD_SYMBOLS_PATH at $UPLOAD_SYMBOLS_PATH"
+  bundle exec fastlane firebase
+
 else
+
+  WORKSPACE_NAME=""
+  PROJECT_NAME=""
+  SCHEME=""
+  TEST_TARGET=""
+  UI_TEST_TARGET=""
 
   DERIVEDDATA="deriveddata"
   # DERIVEDDATA="deriveddata$BUILD_NUMBER" # in case we need per-build derived data
@@ -504,12 +434,11 @@ EOF
 
 echo "$BUILD_SH" > scripts/build.sh
 sed -i "" -e "s/^export RUBY_VERSION=\"\"$/export RUBY_VERSION=\"$RUBY_VERSION\"/g" scripts/build.sh
-sed -i "" -e "s/^export BUNDLER_VERSION=\"\"$/export BUNDLER_VERSION=\"$BUNDLER_VERSION\"/g" scripts/build.sh
-sed -i "" -e "s/^WORKSPACE_NAME=\"\"$/WORKSPACE_NAME=\"$WORKSPACE_NAME\"/g" scripts/build.sh
-sed -i "" -e "s/^PROJECT_NAME=\"\"$/PROJECT_NAME=\"$PROJECT_NAME\"/g" scripts/build.sh
-sed -i "" -e "s/^SCHEME=\"\"$/SCHEME=\"$SCHEME\"/g" scripts/build.sh
-sed -i "" -e "s/^TEST_TARGET=\"\"$/TEST_TARGET=\"$TEST_TARGET\"/g" scripts/build.sh
-sed -i "" -e "s/^UI_TEST_TARGET=\"\"$/UI_TEST_TARGET=\"$UI_TEST_TARGET\"/g" scripts/build.sh
+sed -i "" -e "s/^  WORKSPACE_NAME=\"\"$/  WORKSPACE_NAME=\"$WORKSPACE_NAME\"/g" scripts/build.sh
+sed -i "" -e "s/^  PROJECT_NAME=\"\"$/  PROJECT_NAME=\"$PROJECT_NAME\"/g" scripts/build.sh
+sed -i "" -e "s/^  SCHEME=\"\"$/  SCHEME=\"$SCHEME\"/g" scripts/build.sh
+sed -i "" -e "s/^  TEST_TARGET=\"\"$/  TEST_TARGET=\"$TEST_TARGET\"/g" scripts/build.sh
+sed -i "" -e "s/^  UI_TEST_TARGET=\"\"$/  UI_TEST_TARGET=\"$UI_TEST_TARGET\"/g" scripts/build.sh
 SAFE_PROJECT_NAME=`echo "$PROJECT_NAME" | tr -cd "[:alnum:]\n"`
 sed -i "" -e "s/export KEYCHAIN_NAME=\"\"/export KEYCHAIN_NAME=\"$SAFE_PROJECT_NAME\"/g" scripts/build.sh
 

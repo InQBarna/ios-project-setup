@@ -66,7 +66,8 @@ def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojnam
         provisioningProfiles: {
           bundleid => "match AdHoc " + bundleid
         }
-      }
+      },
+      disable_package_automatic_updates: true
   )
 
   # Collecting a changelog from commit list
@@ -83,9 +84,16 @@ def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojnam
       testers: testers_cs,
       release_notes: changelog
   )
-  upload_symbols_to_crashlytics(
+  if ENV["UPLOAD_SYMBOLS_PATH"] 
+    upload_symbols_to_crashlytics(
+      dsym_path: "./" + appname + ".app.dSYM.zip",
+      binary_path: ENV["UPLOAD_SYNBOLS_PATH"]
+    )
+  else
+    upload_symbols_to_crashlytics(
       dsym_path: "./" + appname + ".app.dSYM.zip"
-  )
+    )
+  end
 
   commit_version_bump(
       message: "Version Bump",
@@ -123,7 +131,8 @@ def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, b
         provisioningProfiles: {
           bundleid => "match AppStore " + bundleid
         }
-      }
+      },
+      disable_package_automatic_updates: true
   )
 
   # Collecting a changelog from commit list
@@ -144,9 +153,16 @@ def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, b
   upload_to_testflight(skip_waiting_for_build_processing: true,
                        changelog: changelog)
 
-  upload_symbols_to_crashlytics(
+  if ENV["UPLOAD_SYMBOLS_PATH"] 
+    upload_symbols_to_crashlytics(
+      dsym_path: "./" + appname + ".app.dSYM.zip",
+      binary_path: ENV["UPLOAD_SYNBOLS_PATH"]
+    )
+  else
+    upload_symbols_to_crashlytics(
       dsym_path: "./" + appname + ".app.dSYM.zip"
-  )
+    )
+  end
 
   commit_version_bump(
       message: "Version Bump",
