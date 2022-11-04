@@ -83,7 +83,7 @@ def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojnam
       testers: testers_cs,
       release_notes: changelog
   )
-  puts " ENV Found + ENV["UPLOAD_SYMBOLS_PATH"] 
+  puts " ENV Found " + ENV["UPLOAD_SYMBOLS_PATH"] 
   if ENV["UPLOAD_SYMBOLS_PATH"] 
     upload_symbols_to_crashlytics(
       dsym_path: "./" + appname + ".app.dSYM.zip",
