@@ -96,7 +96,7 @@ def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojnam
   version = get_version_number(xcodeproj: xcprojname + ".xcodeproj", target: targetname)
   newTag = "firebase-dist/v" + version + "(" + timest + ")"
   add_git_tag(tag: newTag)
-  push_to_git_remote
+  push_git_tags
 
   clean_build_artifacts
 end
