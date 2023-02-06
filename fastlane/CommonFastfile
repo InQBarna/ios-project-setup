@@ -157,7 +157,7 @@ def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, b
   version = get_version_number(xcodeproj: xcprojname + ".xcodeproj", target: targetname)
   newTag = "appstore/v" + version + "(" + timest + ")"
   add_git_tag(tag: newTag)
-  push_to_git_remote
+  push_git_tags
 
   clean_build_artifacts
 end
