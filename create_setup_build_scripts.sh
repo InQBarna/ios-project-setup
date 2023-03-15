@@ -30,7 +30,7 @@ BUNDLER_VERSION=$USER_BUNDLER_VERSION
 version_less_than "$USER_BUNDLER_VERSION" "2.2.21" && BUNDLER_VERSION="2.2.21"
 
 # Configure ruby (rbenv) GEMS
-RUBY_VERSION="2.7.2"
+RUBY_VERSION="3.1.2"
 MIN_GEM_VERSION="3.2.20"
 echo "[CREATE_SETUP_BUILD_SCRIPTS.SH] Setting up/configuring setup script with:"
 echo " RUBY_VERSION      \"$RUBY_VERSION\" (rbenv)"
@@ -68,7 +68,7 @@ which xchtmlreport || echo "[SETUP.SH] WARNING: Could not install xchtmlreport"
 
 echo "[SETUP.SH] Checking / installing ruby + gem + bundler"
 export RUBY_VERSION=""
-export BUNDLER_VERSION=""
+export BUNDLER_VERSION_MIN_GREP=" 2\."
 export MIN_GEM_VERSION=""
 export PATH=/usr/local/bin/:$PATH
 if [[ `which rbenv` == "" ]]; then
@@ -85,13 +85,9 @@ rbenv versions | grep "$RUBY_VERSION" || rbenv install $RUBY_VERSION
 rbenv local $RUBY_VERSION
 ruby --version | grep "$RUBY_VERSION" || exit -1
 gem env | grep "RUBY VERSION: $RUBY_VERSION" || exit -1
-if [[ `bundle --version | grep "$BUNDLER_VERSION"` == "" ]]; then
+if [[ `bundle --version | grep "$BUNDLER_VERSION_MIN_GREP"` == "" ]]; then
     echo "Y" | gem uninstall -a bundler
-    gem install --user-install bundler:$BUNDLER_VERSION
-fi
-if [[ `bundle --version | grep "$BUNDLER_VERSION"` == "" ]]; then
-  echo "[SETUP.SH] Could not install bundler version \"$BUNDLER_VERSION\""
-  exit -1
+    gem install --user-install bundler
 fi
 bundle install
 #bundle clean
@@ -205,9 +201,9 @@ echo "[BUILD.SH] Using xcode at $XCODE_PATH. (Use XCODE_EXTRA_PATH to change it)
 
 echo "[BUILD.SH] Checking input parameters"
 if [ "$INTENT" == "appstore" ] || [ "$INTENT" == "firebase" ]; then
-  if [[ "$MATCH_PASSPHRASE" == "" ]]; then
-    echo "[BUILD.SH] Missing MATCH_PASSPHRASE env variable, configure jenkins bindings or please use:"
-    echo "[BUILD.SH] export MATCH_PASSPHRASE=XXX"
+  if [[ "$MATCH_PASSWORD" == "" ]]; then
+    echo "[BUILD.SH] Missing MATCH_PASSWORD env variable, configure jenkins bindings or please use:"
+    echo "[BUILD.SH] export MATCH_PASSWORD=XXX"
     exit -1
   fi
 fi
@@ -541,3 +537,5 @@ curl "https://www.toptal.com/developers/gitignore/api/xcode,swift,macos,swiftpac
 sed -i "" -e "/^\*\.xcodeproj$/d" .gitignore
 echo "Pods" >> .gitignore
 echo "fastlane/README.md" >> .gitignore
+echo "fastlane/test_output_ui" >> .gitignore
+echo "firebase" >> .gitignore
