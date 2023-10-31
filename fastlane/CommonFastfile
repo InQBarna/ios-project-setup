@@ -42,7 +42,7 @@ def iq_firebase(appname:, schemename:, targetname:, xcprojname:, bundleid:, fire
   iq_firebase_v2(appname: appname, schemename: schemename, targetname: targetname, configuration: 'Release', xcprojname: xcprojname, bundleid: bundleid, firebaseid: firebaseid, testers_cs: testers_cs)
 end
 
-def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojname:, bundleid:, firebaseid:, testers_cs:)
+def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojname:, bundleid:, firebaseid:, testers_cs:, increment_plist_only=false)
 
   clear_derived_data()
 
@@ -54,7 +54,11 @@ def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojnam
   timest = Time.new.strftime("%Y%m%d%H%M")
   ENV["ENV_BUILD_NUMBER"] = timest
 
-  increment_build_number(build_number: timest.to_i)
+  if increment_plist_only
+    increment_build_number_in_plist(build_number: timest.to_i, targetname)
+  else 
+    increment_build_number(build_number: timest.to_i)
+  fi
 
   # Building app for AdHoc distribution, match-styled profiles are  mandatory
   gym(scheme: schemename,
@@ -101,7 +105,7 @@ def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojnam
   clean_build_artifacts
 end
 
-def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:)
+def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:, increment_plist_only=false)
 
   clear_derived_data()
 
@@ -113,7 +117,11 @@ def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, b
   timest = Time.new.strftime("%Y%m%d%H%M")
   ENV["ENV_BUILD_NUMBER"] = timest
 
-  increment_build_number(build_number: timest.to_i)
+  if increment_plist_only
+    increment_build_number_in_plist(build_number: timest.to_i, targetname)
+  else 
+    increment_build_number(build_number: timest.to_i)
+  fi
 
   # Building app for AdHoc distribution, "Release" configuration and match-styled profiles are  mandatory
   gym(scheme: schemename,
