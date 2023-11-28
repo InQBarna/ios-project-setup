@@ -62,13 +62,13 @@ if [[ `which brew` == "" ]]; then
 fi
 
 echo "[SETUP.SH] Installing / checking xchtmlreport"
-which xchtmlreport || brew install https://raw.githubusercontent.com/TitouanVanBelle/XCTestHTMLReport/develop/xchtmlreport.rb
-xchtmlreport -v | grep " 2\." || brew upgrade https://raw.githubusercontent.com/TitouanVanBelle/XCTestHTMLReport/develop/xchtmlreport.rb
+which xchtmlreport || brew install xctesthtmlreport
+xchtmlreport -v | grep " 2\." || brew upgrade xctesthtmlreport
 which xchtmlreport || echo "[SETUP.SH] WARNING: Could not install xchtmlreport"
 
 echo "[SETUP.SH] Checking / installing ruby + gem + bundler"
 export RUBY_VERSION=""
-export BUNDLER_VERSION_MIN_GREP=" 2\."
+export BUNDLER_VERSION_MIN_GREP=" 2\.3"
 export MIN_GEM_VERSION=""
 export PATH=/usr/local/bin/:$PATH
 if [[ `which rbenv` == "" ]]; then
@@ -85,12 +85,22 @@ rbenv versions | grep "$RUBY_VERSION" || rbenv install $RUBY_VERSION
 rbenv local $RUBY_VERSION
 ruby --version | grep "$RUBY_VERSION" || exit -1
 gem env | grep "RUBY VERSION: $RUBY_VERSION" || exit -1
-if [[ `bundle --version | grep "$BUNDLER_VERSION_MIN_GREP"` == "" ]]; then
+if [[ `which bundle` == "" ]]; then
     echo "Y" | gem uninstall -a bundler
     gem install --user-install bundler
 fi
+if [[ `bundle --version | grep "$BUNDLER_VERSION_MIN_GREP"` == "" ]]; then
+    bundle update --bundler
+fi
 bundle install
 #bundle clean
+
+# Use this if firebase is added as SPM
+if [ ! -f "scripts/upload-symbols" ]; then
+  echo "[SETUP.SH] Downloading upload-ymbols for crashlytics"
+  curl "https://github.com/firebase/firebase-ios-sdk/raw/master/Crashlytics/upload-symbols" > scripts/upload-symbols
+  chmod +x scripts/upload-symbols
+fi
 
 EOF
 )
@@ -189,14 +199,14 @@ export RUBY_VERSION=""
 export BUNDLER_VERSION_MIN_GREP=" 2\."
 export PATH=/usr/local/bin/:$PATH
 if [ "$XCODE_EXTRA_PATH" == "" ]; then
-    export XCODE_EXTRA_PATH=""
+    export XCODE_EXTRA_PATH="-14.1.0"
 fi
 export XCODE_PATH="/Applications/Xcode$XCODE_EXTRA_PATH.app/"
 export DEVELOPER_DIR="$XCODE_PATH/Contents/Developer/"
 if [ "$RUNTIME" == "" ]; then
-    export RUNTIME="15.2"
+    export RUNTIME="16.1"
 fi
-export DEVICE="iPhone 11"
+export DEVICE="iPhone 14"
 echo "[BUILD.SH] Using xcode at $XCODE_PATH. (Use XCODE_EXTRA_PATH to change it)"
 
 echo "[BUILD.SH] Checking input parameters"
@@ -214,6 +224,18 @@ bundle --version | grep "$BUNDLER_VERSION_MIN_GREP" || exit -1
 ruby --version | grep "$RUBY_VERSION" || exit -1
 gem env | grep "RUBY VERSION: $RUBY_VERSION" || exit -1
 bundle --version | grep "$BUNDLER_VERSION_MIN_GREP" || exit -1
+
+echo "[BUILD.SH] checking outdated provisioning profiles"
+for provisioning_profile in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision;
+do
+  expirationDate=`/usr/libexec/PlistBuddy -c 'Print :ExpirationDate' /dev/stdin <<< $(security cms -D -i "${provisioning_profile}")`
+  timestamp_expiration=`date -jf"%a %b %d %T %Z %Y" "${expirationDate}" +%s`
+  timestamp_now=`date +%s`
+  if [ ${timestamp_now} -ge ${timestamp_expiration} ]; then
+    echo "[BUILD.SH] removing outdated \"${provisioning_profile}\""
+    rm -f "${provisioning_profile}"
+  fi
+done
 
 if [[ $INTENT == "appstore" ]]; then
 
@@ -260,6 +282,8 @@ else
   # DERIVEDDATA="deriveddata$BUILD_NUMBER" # in case we need per-build derived data
   cleanBuildDirectory() {
     rm -Rf "$DERIVEDDATA"
+    rm fastlane/$PROJECT_NAME-$SCHEME.log
+    cp gymbuildlog/$PROJECT_NAME-$SCHEME.log fastlane/$PROJECT_NAME-$SCHEME.log
     rm -Rf gymbuildlog
   }
 
@@ -321,7 +345,7 @@ else
     # 
     echo "[BUILD.SH] [`date +"%H:%M:%S"`] Building app for testing"
     cleanBuildDirectory
-    bundle exec fastlane gym --workspace "./$WORKSPACE_NAME.xcworkspace" --scheme "$SCHEME" --skip_archive --configuration Debug --destination="platform=iOS Simulator,name=$simulatorName,OS=$RUNTIME" --skip_package_ipa true --buildlog_path gymbuildlog --xcargs "clean build-for-testing" --derived_data_path="$DERIVEDDATA"
+    bundle exec fastlane gym --disable_package_automatic_updates true --workspace "./$WORKSPACE_NAME.xcworkspace" --scheme "$SCHEME" --skip_archive --configuration Debug --destination="platform=iOS Simulator,name=$simulatorName,OS=$RUNTIME" --skip_package_ipa true --buildlog_path gymbuildlog --xcargs "clean build-for-testing" --derived_data_path="$DERIVEDDATA"
     if [ $? -ne 0 ]; then
       removeCreatedSimulator
       cleanBuildDirectory
@@ -333,8 +357,8 @@ else
     # 
     MAX_WARNINGS=0
     echo "[BUILD.SH] [`date +"%H:%M:%S"`] Checking for $MAX_WARNINGS warnings"
-    WARNINGS=`egrep '^(/.+:[0-9+:[0-9]+:.(warning):|fatal|===)' "gymbuildlog/$PROJECT_NAME-$SCHEME.log" | uniq`
-    NUM_WARNINGS=`echo $WARNINGS | egrep "(warning|fatal|===)" | wc -l`
+    WARNINGS=`egrep '^(/.+:[0-9+:[0-9]+:.(warning):|fatal|===)' "gymbuildlog/$PROJECT_NAME-$SCHEME.log" | grep -v "/SourcePackages/" | grep -v "to type-check (limit:" | uniq`
+    NUM_WARNINGS=`echo $WARNINGS | egrep "(warning|fatal|===)" | grep -v "/SourcePackages/" | grep -v "to type-check (limit:" | wc -l`
     if [[ "$NUM_WARNINGS" -gt "$MAX_WARNINGS" ]]; then
       echo "There are $NUM_WARNINGS warnings, invalid build (max allowed warnings $MAX_WARNINGS"
       echo $WARNINGS
@@ -348,7 +372,7 @@ else
     # Run unit tests
     # 
     echo "[BUILD.SH] [`date +"%H:%M:%S"`] Running unit tests"
-    bundle exec fastlane scan --test_without_building="true" --devices="$DEVICE ($RUNTIME)" --scheme="$SCHEME" --code_coverage="true" --clean="false" --only_testing="$TEST_TARGET" --derived_data_path="$DERIVEDDATA"
+    bundle exec fastlane scan --test_without_building="true" --devices="$DEVICE ($RUNTIME)" --scheme="$SCHEME" --code_coverage="true" --clean="false" --only_testing="$TEST_TARGET" --derived_data_path="$DERIVEDDATA" --skip_package_dependencies_resolution="true"
     if [ $? -ne 0 ]; then
       removeCreatedSimulator
       cleanBuildDirectory
@@ -364,14 +388,14 @@ else
     if [[ "$UI_TEST_TARGET" != "" ]]; then
       if [[ "$*" != "--no-concurrent" ]]; then
         echo "[BUILD.SH] [`date +"%H:%M:%S"`] Running UI tests concurrently"
-        bundle exec fastlane scan --test_without_building="true" --code_coverage="false" --clean="false" --only_testing="$UI_TEST_TARGET" --output_directory="fastlane/test_output_ui/" --result_bundle="true" --xcargs="-parallel-testing-enabled YES -parallel-testing-worker-count 3" --destination="platform=iOS Simulator,name=$simulatorName,OS=$RUNTIME" --devices="${simulatorName} ($RUNTIME)" --derived_data_path="$DERIVEDDATA" --disable_xcpretty || true
+        bundle exec fastlane scan --test_without_building="true" --code_coverage="false" --clean="false" --only_testing="$UI_TEST_TARGET" --output_directory="fastlane/test_output_ui/" --result_bundle="true" --xcargs="-parallel-testing-enabled YES -parallel-testing-worker-count 3" --destination="platform=iOS Simulator,name=$simulatorName,OS=$RUNTIME" --devices="${simulatorName} ($RUNTIME)" --derived_data_path="$DERIVEDDATA" --disable_xcpretty --skip_package_dependencies_resolution="true" || true
         echo "[BUILD.SH] [`date +"%H:%M:%S"`] Building junit result with xchtml from files at"
         xchtmlreport -r "./fastlane/test_output_ui/$PROJECT_NAME.xcresult" -j
         cp "fastlane/test_output_ui/$PROJECT_NAME.xcresult/report.junit" "fastlane/test_output_ui/report.junit"
         sed -i "" -e "s/ - $simulatorName - $RUNTIME//g" "fastlane/test_output_ui/report.junit"
       else
         echo "[BUILD.SH] [`date +"%H:%M:%S"`] Running UI tests"
-        bundle exec fastlane scan --test_without_building="true" --code_coverage="false" --clean="false" --only_testing="$UI_TEST_TARGET" --output_directory="fastlane/test_output_ui/" --result_bundle="true" --xcargs="--parallel-testing-enabled NO" --destination="platform=iOS Simulator,name=$simulatorName,OS=$RUNTIME" --devices="${simulatorName} ($RUNTIME)" --derived_data_path="$DERIVEDDATA" || true
+        bundle exec fastlane scan --test_without_building="true" --code_coverage="false" --clean="false" --only_testing="$UI_TEST_TARGET" --output_directory="fastlane/test_output_ui/" --result_bundle="true" --xcargs="--parallel-testing-enabled NO" --destination="platform=iOS Simulator,name=$simulatorName,OS=$RUNTIME" --devices="${simulatorName} ($RUNTIME)" --derived_data_path="$DERIVEDDATA" --skip_package_dependencies_resolution="true" || true
         echo "[BUILD.SH] [`date +"%H:%M:%S"`] Building junit result with xchtml from files at"
         xchtmlreport -r "./fastlane/test_output_ui/$PROJECT_NAME.xcresult" -j
       fi
@@ -390,10 +414,10 @@ else
     #
     # Building app
     # 
-    echo "[BUILD.SH] [`date +"%H:%M:%S"`] Building app for testing"
+    echo "[BUILD.SH] [`date +"%H:%M:%S"`] Building app"
     simulatorName="$DEVICE"
     cleanBuildDirectory
-    bundle exec fastlane gym --workspace "./$WORKSPACE_NAME.xcworkspace" --scheme "$SCHEME" --skip_archive --configuration Debug --destination="platform=iOS Simulator,name=$simulatorName,OS=$RUNTIME" --skip_package_ipa true --buildlog_path gymbuildlog --xcargs "clean" --derived_data_path="$DERIVEDDATA"
+    bundle exec fastlane gym --disable_package_automatic_updates true --workspace "./$WORKSPACE_NAME.xcworkspace" --scheme "$SCHEME" --skip_archive --configuration Debug --destination="platform=iOS Simulator,name=$simulatorName,OS=$RUNTIME" --skip_package_ipa true --buildlog_path gymbuildlog --xcargs "clean" --derived_data_path="$DERIVEDDATA"
     if [ $? -ne 0 ]; then
       cleanBuildDirectory
       exit -1
@@ -404,8 +428,8 @@ else
     # 
     MAX_WARNINGS=0
     echo "[BUILD.SH] [`date +"%H:%M:%S"`] Checking for $MAX_WARNINGS warnings"
-    WARNINGS=`egrep '^(/.+:[0-9+:[0-9]+:.(warning):|fatal|===)' "gymbuildlog/$PROJECT_NAME-$SCHEME.log" | uniq`
-    NUM_WARNINGS=`echo $WARNINGS | egrep "(warning|fatal|===)" | wc -l`
+    WARNINGS=`egrep '^(/.+:[0-9+:[0-9]+:.(warning):|fatal|===)' "gymbuildlog/$PROJECT_NAME-$SCHEME.log" | grep -v "/SourcePackages/" | grep -v "to type-check (limit:" | uniq`
+    NUM_WARNINGS=`echo $WARNINGS | egrep "(warning|fatal|===)" | grep -v "to type-check (limit:" | wc -l`
     if [[ "$NUM_WARNINGS" -gt "$MAX_WARNINGS" ]]; then
       echo "There are $NUM_WARNINGS warnings, invalid build (max allowed warnings $MAX_WARNINGS"
       echo $WARNINGS
@@ -539,3 +563,6 @@ echo "Pods" >> .gitignore
 echo "fastlane/README.md" >> .gitignore
 echo "fastlane/test_output_ui" >> .gitignore
 echo "firebase" >> .gitignore
+echo "coverage" >> .gitignore
+echo "scripts/upload-symbols" >> .gitignore
+echo "*.p8" >> .gitignore
