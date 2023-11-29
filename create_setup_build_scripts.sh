@@ -466,7 +466,7 @@ chmod +x scripts/build.sh
 
 FASTFILE=$(cat <<"EOF"
 
-import_from_git(url: 'http://gitlab.inqbarna.com/contrib/xcode-scripts.git',
+import_from_git(url: 'https://github.com/InQBarna/xcode-scripts',
                path: 'fastlane/CommonFastfile')
 
 default_platform(:ios)

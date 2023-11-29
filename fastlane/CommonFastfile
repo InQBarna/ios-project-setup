@@ -89,7 +89,8 @@ def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojnam
   )
 
   upload_symbols_to_crashlytics(
-      dsym_path: "./" + appname + ".app.dSYM.zip"
+      dsym_path: "./" + appname + ".app.dSYM.zip",
+      app_id: firebaseid
   )
 
   commit_version_bump(
@@ -106,6 +107,10 @@ def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojnam
 end
 
 def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:, increment_plist_only: false)
+  iq_beta_v2(appname, schemename, targetname, configuration, xcprojname, bundleid, firebase_app_id, increment_plist_only)
+end
+
+def iq_beta_v2(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:, firebase_app_id:, increment_plist_only: false)
 
   clear_derived_data()
 
@@ -154,7 +159,8 @@ def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, b
                        changelog: changelog)
 
   upload_symbols_to_crashlytics(
-      dsym_path: "./" + appname + ".app.dSYM.zip"
+      dsym_path: "./" + appname + ".app.dSYM.zip",
+      app_id: firebase_app_id
   )
 
   commit_version_bump(
