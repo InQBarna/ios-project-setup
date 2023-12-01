@@ -93,7 +93,6 @@ def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojnam
       app_id: firebaseid
   )
 
-  sh("git checkout Gemfile.lock") # En jenkins se me está modificando este archivo !!??
   commit_version_bump(
       message: "Version Bump",
       xcodeproj: xcprojname + ".xcodeproj",
