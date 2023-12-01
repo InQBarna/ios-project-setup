@@ -96,7 +96,7 @@ def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojnam
   commit_version_bump(
       message: "Version Bump",
       xcodeproj: xcprojname + ".xcodeproj",
-      ignore: "(GoogleService|Gemfile.lock)"
+      ignore: "GoogleService"
   )
 
   version = get_version_number(xcodeproj: xcprojname + ".xcodeproj", target: targetname)
@@ -166,7 +166,8 @@ def iq_beta_v2(appname:,  schemename:,  targetname:, configuration:, xcprojname:
 
   commit_version_bump(
       message: "Version Bump",
-      xcodeproj: xcprojname + ".xcodeproj"
+      xcodeproj: xcprojname + ".xcodeproj",
+      ignore: "GoogleService"
   )
 
   version = get_version_number(xcodeproj: xcprojname + ".xcodeproj", target: targetname)
