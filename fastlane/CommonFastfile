@@ -96,7 +96,7 @@ def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojnam
   commit_version_bump(
       message: "Version Bump",
       xcodeproj: xcprojname + ".xcodeproj",
-      ignore: "GoogleServices"
+      ignore: "GoogleService"
   )
 
   version = get_version_number(xcodeproj: xcprojname + ".xcodeproj", target: targetname)
