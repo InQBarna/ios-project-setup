@@ -106,7 +106,7 @@ def iq_firebase_v3(appname:, schemename:, targetname:, configuration:, xcprojnam
        xcodeproj: xcprojname + ".xcodeproj",
        ignore: "GoogleService"
      )
-  }
+  end
 
   version = get_version_number(xcodeproj: xcprojname + ".xcodeproj", target: targetname)
   newTag = "firebase-dist/v" + version + "(" + timest + ")"
