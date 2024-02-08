@@ -61,7 +61,7 @@ def iq_firebase_v3(appname:, schemename:, targetname:, configuration:, xcprojnam
 
   if increment_version == 'plist_and_xcodeproj'
     increment_build_number(build_number: timest.to_i)
-  else if increment_version == 'plist'
+  elsif increment_version == 'plist'
     increment_build_number_in_plist(build_number: timest, target: targetname)
   else 
     # nothing to do
@@ -138,7 +138,7 @@ def iq_beta_v3(appname:,  schemename:,  targetname:, configuration:, xcprojname:
 
   if increment_version == 'plist_and_xcodeproj'
     increment_build_number(build_number: timest.to_i)
-  else if increment_version == 'plist'
+  elsif increment_version == 'plist'
     increment_build_number_in_plist(build_number: timest, target: targetname)
   else 
     # nothing to do
