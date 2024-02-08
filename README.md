@@ -2,7 +2,7 @@
 
 We want to start a fresh project ready for CICD, which means
 
-    - Easily build te project in any (CICD)  machine (with some minimum requirements). Forcing quality gates.
+    - Easily build the project in any (CICD)  machine (with some minimum requirements). Forcing quality gates.
     - Easily run the tests, force they are passing and coverage %.
     - Easily send a test version to stakeholders
     - Easily send a version to AppStoreConnect for a new release
@@ -39,7 +39,7 @@ ${PATH_TO_IOS_PROJECT_SETUP_REPO}/create_setup_build_scripts.sh
 This will create a couple of baseline scripts in your repo to make it easier to setup and build your project.
     - Setup script should now be ready to be used, you can test it by executing: `./scripts/setup.sh`
     - Build script is created at: `./scripts/build.sh`. This is not ready to be used yet.
-    - A build phase should now be added to the project to set the build number correctly with format: YYYYMMddHHmm. This build number will be written inside the app's bundle, so no commits are expected for every vesion bump.
+    - A build phase should now be added to the project to set the build number correctly with format: YYYYMMddHHmm. This build number will be written inside the app's bundle, so no commits are expected for every version bump.
     - If no fastlane folder is found, Fastfile and Appfile will have been generated at fastlane/FastFile fastlane/Appfile, please check they're created correctly
     -  MANUALLY: firebase id should be manually added to fastlane/Fastfile
     -  MANUALLY: the p8 file (key id and issuer id) should be manually downloaded and configured at fastlane/Fastfile
@@ -57,7 +57,7 @@ At this point you should be able to run `./scripts/build.sh` correctly and it wi
 
 If you correctly commit all your work, now `bundle exec fastlane beta` should work ! (unless your project doesn't even compile :D )
 
-7. (Optional) Firebase. Here are the instructions to add firebase using Pods. TODO: update to SPM documentation
+7. (Optional) Firebase. These are the instructions to add firebase using Pods. TODO: update to SPM documentation
     - `pod 'Firebase/Crashlytics'`
     - Setup the project on firebase, following the steps from console.firebase.com: Pods, addition of GoogleServices to project, appdelegate setup...
       - Right now adding firebase with SPM does not work correctly when uploading the debug symbols to crashlytics, please avoid SPM for firebase until solved
