@@ -2,10 +2,10 @@
 
 We want to start a fresh project ready for CICD, which means
 
-    - Easily build te project in any (CICD)  machine (with some minimum requirements). And guarantee 0 warnings!
-    - Easily run the tests and guarante they pass. And report coverage!
+    - Easily build te project in any (CICD)  machine (with some minimum requirements). Forcing quality gates.
+    - Easily run the tests, force they are passing and coverage %.
     - Easily send a test version to stakeholders
-    - Easily send a vertion to AppStoreConnect for a new release
+    - Easily send a version to AppStoreConnect for a new release
 
 ## How to set up a new project
 
@@ -28,16 +28,18 @@ We want to start a fresh project ready for CICD, which means
 
 4. Create the xcode project on the root of the repository.
     - Create an iOS project
-    - Choose an existing bunddle id in dev portal
-    - Close it before moving to step 3.
+    - Choose an existing bundle id in dev portal
+    - Now close the project before moving to step 3.
 
-5. Run the scripts setup script by executing:
+5. Run the setup script by executing:
 ```
-../xcode-scripts/create_setup_build_scripts.sh
+export PATH_TO_IOS_PROJECT_SETUP_REPO="~/projects/ios-project-setup"
+${PATH_TO_IOS_PROJECT_SETUP_REPO}/create_setup_build_scripts.sh
 ```
+This will create a couple of baseline scripts in your repo to make it easier to setup and build your project.
     - Setup script should now be ready to be used, you can test it by executing: `./scripts/setup.sh`
     - Build script is created at: `./scripts/build.sh`. This is not ready to be used yet.
-    - A build phase should now be added to the project to set the build number correctly with format: YYYYMMddHHmm.
+    - A build phase should now be added to the project to set the build number correctly with format: YYYYMMddHHmm. This build number will be written inside the app's bundle, so no commits are expected for every vesion bump.
     - If no fastlane folder is found, Fastfile and Appfile will have been generated at fastlane/FastFile fastlane/Appfile, please check they're created correctly
     -  MANUALLY: firebase id should be manually added to fastlane/Fastfile
     -  MANUALLY: the p8 file (key id and issuer id) should be manually downloaded and configured at fastlane/Fastfile
@@ -48,14 +50,14 @@ At this point you should be able to run `./scripts/build.sh` correctly and it wi
 
 6. Appstore
     - (OPTIONAL) MANUALLY write at least one device to `fastlane/devices.txt`, either MANUALLY or ... 
-      - If you have correct credentials for it (doesn't work with keys, plain username/password), you can download the devices registered by running: `bundle exec ruby ../xcode-scripts/samples/read_devices_from_developer_portal.rb"`
+      - If you have correct credentials for it (doesn't work with keys, plain username/password), you can download the devices registered by running: `bundle exec ruby ${PATH_TO_IOS_PROJECT_SETUP_REPO}/samples/read_devices_from_developer_portal.rb"`
     - Create the provisioning profiles using: `bundle exec fastlane update_devices_and_profiles`
       - (OPTIONAL) MANUALLY unset "Automatically manage signing"
       - (OPTIONAL) MANUALLY select the newly created prov profiles for every config
 
 If you correctly commit all your work, now `bundle exec fastlane beta` should work ! (unless your project doesn't even compile :D )
 
-7. (Optional) Firebase
+7. (Optional) Firebase. Here are the instructions to add firebase using Pods. TODO: update to SPM documentation
     - `pod 'Firebase/Crashlytics'`
     - Setup the project on firebase, following the steps from console.firebase.com: Pods, addition of GoogleServices to project, appdelegate setup...
       - Right now adding firebase with SPM does not work correctly when uploading the debug symbols to crashlytics, please avoid SPM for firebase until solved
@@ -80,11 +82,10 @@ If you correctly commit all your work, now `bundle exec fastlane firebase` shoul
     - Add swiftlint build phase `bundle exec ruby ../xcode-scripts/samples/add_swiftlint_build_phase.rb`
     - Or add SwiftFormat build phase: `bundle exec ruby ../xcode-scripts/samples/add_swiftformat_build_phase.rb`
 
-TODO for setup_gem.sh:
+TODO:
 
-    - Change name beta to "testflight"
-    - Grab firebase id from env variable
-    - Check current xcode version and target
-    - Check for firebase pods
-    - Check firebase plugin on fastlane
+    - Change name beta to "testflight" in CommonFastfile
+    - Enforce current xcode version
+    - Check for firebase pods and / or SPM
+    - Check firebase plugin on fastlane before CommonFastFile runs completely
     - Check coverage is added to target
