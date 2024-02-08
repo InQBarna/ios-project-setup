@@ -43,7 +43,7 @@ def iq_firebase(appname:, schemename:, targetname:, xcprojname:, bundleid:, fire
 end
 
 def iq_firebase_v2(appname:, schemename:, targetname:, configuration:, xcprojname:, bundleid:, firebaseid:, testers_cs:, increment_plist_only: false)
-  iq_firebase_v3(appname: appname, schemename: schemename, targetname: targetname, configuration: 'Release', xcprojname: xcprojname, bundleid: bundleid, firebaseid: firebaseid, testers_cs: testers_cs, increment_version: (increment_plist_only ? 'plist : 'plist_and_xcodeproj'))
+  iq_firebase_v3(appname: appname, schemename: schemename, targetname: targetname, configuration: 'Release', xcprojname: xcprojname, bundleid: bundleid, firebaseid: firebaseid, testers_cs: testers_cs, increment_version: (increment_plist_only ? 'plist' : 'plist_and_xcodeproj'))
 end
 
 # values for increment_version: 'none' 'plist' 'plist_and_xcodeproj'
@@ -117,11 +117,11 @@ def iq_firebase_v3(appname:, schemename:, targetname:, configuration:, xcprojnam
 end
 
 def iq_beta(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:, increment_plist_only: false)
-  iq_beta_v3(appname: appname, schemename: schemename, targetname: targetname, configuration: configuration, xcprojname: xcprojname, bundleid: bundleid, firebase_app_id: nil, increment_version: (increment_plist_only ? 'plist : 'plist_and_xcodeproj'))
+  iq_beta_v3(appname: appname, schemename: schemename, targetname: targetname, configuration: configuration, xcprojname: xcprojname, bundleid: bundleid, firebase_app_id: nil, increment_version: (increment_plist_only ? 'plist' : 'plist_and_xcodeproj'))
 end
 
 def iq_beta_v2(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:, firebase_app_id:, increment_plist_only: false)
-  iq_beta_v3(appname: appname, schemename: schemename, targetname: targetname, configuration: configuration, xcprojname: xcprojname, bundleid: bundleid, firebase_app_id: firebase_app_id, increment_version: (increment_plist_only ? 'plist : 'plist_and_xcodeproj'))
+  iq_beta_v3(appname: appname, schemename: schemename, targetname: targetname, configuration: configuration, xcprojname: xcprojname, bundleid: bundleid, firebase_app_id: firebase_app_id, increment_version: (increment_plist_only ? 'plist' : 'plist_and_xcodeproj'))
 end
 
 def iq_beta_v3(appname:,  schemename:,  targetname:, configuration:, xcprojname:, bundleid:, firebase_app_id:, increment_version: 'none')
