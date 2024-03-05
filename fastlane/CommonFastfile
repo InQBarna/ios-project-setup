@@ -172,7 +172,8 @@ def iq_beta_v3(appname:,  schemename:,  targetname:, configuration:, xcprojname:
   #        skip_screenshots: true,
   #        automatic_release: false)
   upload_to_testflight(skip_waiting_for_build_processing: true,
-                       changelog: changelog)
+                       changelog: changelog,
+                       app_identifier: bundleid)
 
   upload_symbols_to_crashlytics(
       dsym_path: "./" + appname + ".app.dSYM.zip",
