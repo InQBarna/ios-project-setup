@@ -77,7 +77,8 @@ def iq_firebase_v3(appname:, schemename:, targetname:, configuration:, xcprojnam
         provisioningProfiles: {
           bundleid => "match AdHoc " + bundleid
         }
-      }
+      },
+      xcargs: '-skipPackagePluginValidation'
   )
 
   # Collecting a changelog from commit list
@@ -153,7 +154,8 @@ def iq_beta_v3(appname:,  schemename:,  targetname:, configuration:, xcprojname:
         provisioningProfiles: {
           bundleid => "match AppStore " + bundleid
         }
-      }
+      },
+      xcargs: '-skipPackagePluginValidation'
   )
 
   # Collecting a changelog from commit list
